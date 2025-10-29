@@ -16,9 +16,9 @@ except Exception as e:
     client = None
 
 # --- Streamlit App Setup ---
-st.set_page_config(page_title="Form JSON Generator (Llama 3)", page_icon="⚙️", layout="centered")
-st.title("Smart System Form JSON Generator (Powered by Llama 3)")
-st.markdown("Enter your system creation requirement, and Llama 3 will generate a complete, detailed JSON structure.")
+st.set_page_config(page_title="Form JSON Generator (Llama 3)", page_icon="", layout="centered")
+st.title("System Form JSON Generator (Llama 3)")
+st.markdown("Enter your system creation requirement")
 
 user_input = st.text_area("Enter your system creation requirement :", "", height=150)
 
@@ -207,3 +207,4 @@ JSON Structure Example (Use this exact schema):
 
     else:
         st.warning("Please enter a requirement before clicking Generate.")
+
