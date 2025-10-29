@@ -19,7 +19,7 @@ if GROQ_API_KEY:
     try:
         client = Groq(api_key=GROQ_API_KEY)
         # Using Llama 3 70B for high-quality structured generation
-        LLAMA3_MODEL = 'llama3-70b-8192'
+        LLAMA3_MODEL = 'llama-3.3-70b-versatile'
     except Exception as e:
         st.error(f"Failed to initialize Groq client: {e}")
 
@@ -218,3 +218,4 @@ JSON Structure Example (Use this exact schema):
 
     else:
         st.warning("Please enter a requirement before clicking Generate.")
+
