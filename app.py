@@ -10,7 +10,7 @@ GROQ_API_KEY = "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"
 try:
     client = Groq(api_key=GROQ_API_KEY)
     # Using Llama 3 70B for high-quality structured generation
-    LLAMA3_MODEL = 'llama3-70b-8192' 
+    LLAMA3_MODEL = 'llama-3.1-70b-8192'
 except Exception as e:
     st.error(f"Failed to initialize Groq client. Please check your API key: {e}")
     client = None
@@ -207,5 +207,6 @@ JSON Structure Example (Use this exact schema):
 
     else:
         st.warning("Please enter a requirement before clicking Generate.")
+
 
 
