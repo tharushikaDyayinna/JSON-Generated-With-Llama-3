@@ -133,9 +133,9 @@ JSON Structure Example (Do not modify the JSON structure itself):
             
             # Generate a conversational response for the chat history
             if is_initial:
-                return "✅ Initial JSON structure generated successfully. You can now tell me what to modify (e.g., 'Add a field for Total Tax' or 'Change InvoiceID to start with 100')."
+                return "Initial JSON structure generated successfully. You can now tell me what to modify (e.g., 'Add a field for Total Tax' or 'Change InvoiceID to start with 100')."
             else:
-                return "🔄 JSON updated successfully based on your feedback."
+                return "JSON updated successfully based on your feedback."
 
         except json.JSONDecodeError:
             return f"❌ Error: Model did not return valid JSON. Raw Output: {generated_text[:200]}..."
@@ -145,7 +145,7 @@ JSON Structure Example (Do not modify the JSON structure itself):
 
 
 # --- 5. STREAMLIT UI LAYOUT ---
-st.set_page_config(page_title="JSON Editor Chat", page_icon="💬", layout="wide")
+st.set_page_config(page_title="JSON Editor Chat", page_icon="", layout="wide")
 st.title("Needlu Form Generator (Llama 3.3)")
 st.markdown("Enter your requirement below. The model will create a JSON structure, and you can refine it continuously through chat.")
 
@@ -206,4 +206,5 @@ with col2:
         st.info("Start by entering your form requirement (e.g., 'Create a Purchase Order form with fields for Vendor, Item, Quantity, and Price').")
     else:
         st.success("Refine the JSON using the chat interface on the left.")
+
 
