@@ -2,220 +2,210 @@ import streamlit as st
 from groq import Groq
 import json
 
-
+# --- 1. API KEY CONFIGURATION ---
+# NOTE: The user has explicitly provided their Groq API key for testing.
+# For production Streamlit apps, it is HIGHLY recommended to use st.secrets.
 GROQ_API_KEY = "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"
 
-# If you prefer using Streamlit Secrets for better security, you can
-# uncomment the block below and remove the direct assignment above:
-# try:
-#     GROQ_API_KEY = st.secrets["GROQ_API_KEY"]
-# except KeyError:
-#     st.error("GROQ_API_KEY not found in Streamlit Secrets. Please configure it in your app's secrets settings.")
-#     GROQ_API_KEY = None # Ensure the key is None if not found
-
-# Initialize the Groq client
+# Initialize the Groq client and model name
 client = None
+LLAMA3_MODEL = 'llama-3.3-70b-versatile' # Confirmed replacement model
+
 if GROQ_API_KEY:
     try:
         client = Groq(api_key=GROQ_API_KEY)
-        # Using Llama 3 70B for high-quality structured generation
-        LLAMA3_MODEL = 'llama-3.3-70b-versatile'
     except Exception as e:
         st.error(f"Failed to initialize Groq client: {e}")
 
-# --- Streamlit App Setup ---
-st.set_page_config(page_title="Form JSON Generator (Llama 3)", page_icon="", layout="centered")
-st.title("System Form JSON Generator (Llama 3)")
-#st.markdown("Enter your system creation requirement, and Llama 3 will generate a complete, detailed JSON structure.")
+# --- 2. SESSION STATE MANAGEMENT ---
+# Initialize session state for continuous chat and JSON artifact
+if 'messages' not in st.session_state:
+    st.session_state['messages'] = []
+if 'generated_json' not in st.session_state:
+    # Use a dummy initial structure to check if generation has occurred
+    st.session_state['generated_json'] = '{"formData": {"newformName": "Draft Form"}, "fieldsData": []}'
+if 'is_initial' not in st.session_state:
+    st.session_state['is_initial'] = True
 
-user_input = st.text_area("Enter your system creation requirement :", "", height=150)
+# --- 3. JSON SCHEMA DEFINITION (Used for prompting) ---
+JSON_STRUCTURE_EXAMPLE = """{
+    "formData": {
+        "entType": "T Department",
+        "formCat": "T Form",
+        "newformName": "Invoice",
+        "frequency": "any",
+        "editable": 1,
+        "deletable": 1,
+        "newRec": 1,
+        "parentID": 0
+    },
+    "fieldsData": [
+        {
+            "data_name": "FieldName",
+            "data_type": "text/options/date/calculation/sequence",
+            "sorting_value": "1",
+            "identifier": 0,
+            "options_from": "",
+            "fetch_function": "",
+            "calculation": "",
+            "defaultVal": "",
+            "features": "",
+            "inherit": 0,
+            "attributes": "",
+            "entityMethod": "",
+            "entityOrLevel": "",
+            "mapping": [],
+            "keyMember": 0,
+            "sumClass": "",
+            "data_info": "",
+            "help_text": "",
+            "sum_func": "",
+            "countIf": "",
+            "decimals": "",
+            "prefix": "",
+            "sufix": "",
+            "digits": "",
+            "replacer": "",
+            "start_with": "",
+            "formName": ""
+        }
+    ]
+}"""
 
-if st.button("Generate JSON"):
-    if not GROQ_API_KEY:
-        # This branch should only be reached if the key is None (e.g., if you switch back to secrets and it fails)
-        st.error("Cannot proceed. The Groq API key is not configured.")
-    elif not client:
-        st.error("Cannot proceed. Groq client failed to initialize.")
-    elif user_input.strip():
+# --- 4. CORE GENERATION / EDITING FUNCTION ---
+def generate_or_edit_json(prompt):
+    """Handles both initial JSON generation and subsequent iterative editing."""
 
-        # Define the JSON structure example for context and schema definition
-        json_structure_example = """{
-            "formData": {
-                "entType": "T Department",
-                "formCat": "T Form",
-                "newformName": "Invoice",
-                "frequency": "any",
-                "editable": 1,
-                "deletable": 1,
-                "newRec": 1,
-                "parentID": 0
-            },
-            "fieldsData": [
-                {
-                    "data_name": "InvoiceID",
-                    "data_type": "sequence",
-                    "sorting_value": "1",
-                    "identifier": 0,
-                    "options_from": "",
-                    "fetch_function": "",
-                    "calculation": "",
-                    "defaultVal": "",
-                    "features": "",
-                    "inherit": 0,
-                    "attributes": "readonly",
-                    "entityMethod": "",
-                    "entityOrLevel": "",
-                    "mapping": [],
-                    "keyMember": 0,
-                    "sumClass": "",
-                    "data_info": "",
-                    "help_text": "",
-                    "sum_func": "",
-                    "countIf": "",
-                    "decimals": "0",
-                    "prefix": "INV",
-                    "sufix": "",
-                    "digits": "5",
-                    "replacer": "0",
-                    "start_with": "1"
-                },
-                {
-                    "data_name": "CustomerName",
-                    "data_type": "options",
-                    "sorting_value": "2",
-                    "identifier": 0,
-                    "options_from": "CustomerEntity",
-                    "fetch_function": "",
-                    "calculation": "",
-                    "defaultVal": "",
-                    "features": "",
-                    "inherit": 0,
-                    "attributes": "required",
-                    "entityMethod": "",
-                    "entityOrLevel": "",
-                    "mapping": [],
-                    "keyMember": 0,
-                    "sumClass": "",
-                    "data_info": "",
-                    "help_text": "",
-                    "sum_func": "",
-                    "countIf": "",
-                    "decimals": "",
-                    "formName": "Customers"
-                },
-                {
-                    "data_name": "InvoiceDate",
-                    "data_type": "date",
-                    "sorting_value": "3",
-                    "identifier": 0,
-                    "options_from": "",
-                    "fetch_function": "",
-                    "calculation": "",
-                    "defaultVal": "TODAY",
-                    "features": "",
-                    "inherit": 0,
-                    "attributes": "required",
-                    "entityMethod": "",
-                    "entityOrLevel": "",
-                    "mapping": [],
-                    "keyMember": 0,
-                    "sumClass": "",
-                    "data_info": "",
-                    "help_text": "",
-                    "sum_func": "",
-                    "countIf": "",
-                    "decimals": ""
-                },
-                {
-                    "data_name": "LineTotal",
-                    "data_type": "calculation",
-                    "sorting_value": "7",
-                    "identifier": 0,
-                    "options_from": "",
-                    "fetch_function": "",
-                    "calculation": "{GoodsReceived^QuantityReceived^GoodsReceived.GRNLineID,RequestForm.CurrentLine,=} * {PurchaseOrder^UnitPrice^PurchaseOrder.POLineID,RequestForm.CurrentLine,=}",
-                    "defaultVal": "",
-                    "features": "",
-                    "inherit": 0,
-                    "attributes": "readonly",
-                    "entityMethod": "",
-                    "entityOrLevel": "",
-                    "mapping": [],
-                    "keyMember": 0,
-                    "sumClass": "",
-                    "data_info": "",
-                    "help_text": "",
-                    "sum_func": "",
-                    "countIf": "",
-                    "decimals": "2"
-                }
-            ]
-        }"""
-
-        # Define the JSON schema to enforce the output structure
-        json_schema = json.loads(json_structure_example)
-
-        # --- CONSTRUCT THE PROMPT ---
-        # The prompt still provides context and rules for the model.
-        system_prompt = f"""You are a system automation expert. Your task is to generate a JSON object based on the user's requirement.
+    # 1. Determine the mode and construct the system prompt
+    is_initial = st.session_state['is_initial']
+    
+    if is_initial:
+        # Initial Generation Mode
+        system_instruction = f"""You are a system automation expert. Your task is to generate a JSON object based on the user's requirement.
+**MANDATORY**: Your response MUST be ONLY the complete, valid JSON object. Do not include any narrative or markdown outside of the JSON block.
 
 **CRITICAL INSTRUCTION**: Every object generated within the "fieldsData" array MUST strictly adhere to the full structure provided in the JSON Structure Example, including all keys.
 **MANDATORY**: The value for the `help_text` key MUST ALWAYS be an empty string ("") for ALL fields.
 **SPECIAL INSTRUCTION FOR OPTIONS**: For any field with data_type: "options", you MUST include the "formName" key to specify the source form.
 
-**SPECIAL INSTRUCTION FOR FETCH_FUNCTION**: Use the `fetch_function` key with the following syntax for lookups:
-`fm^fd^rf1,tf1,lo1 and rf2,tf2,lo2 ^ Entity Level Type`
-
-**IMPORTANT INSTRUCTION FOR CALCULATION**: Calculations must use one of the following two formats. Use the complex format when a value needs to be fetched from another form within the calculation.
-1. Simple internal reference: **{{FormName.FieldName}}** (e.g., {{Invoice.Quantity}} * {{Invoice.Price}})
-2. Complex cross-form reference: **{{SourceForm^SourceField^MappingField,CurrentValue,Operator}}** (e.g., {{{{GoodsReceived^QuantityReceived^GoodsReceived.GRNLineID,RequestForm.CurrentLine,=}}}} * {{{{PurchaseOrder^UnitPrice^PurchaseOrder.POLineID,RequestForm.CurrentLine,=}}}})
-
 JSON Structure Example (Use this exact schema):
-{json_structure_example}
+{JSON_STRUCTURE_EXAMPLE}
 """
-
-        try:
-            with st.spinner("Generating JSON with Llama 3..."):
-                # --- 2. Groq API Call Implementation ---
-                # Use the Groq chat.completions.create method with JSON response format
-                completion = client.chat.completions.create(
-                    model=LLAMA3_MODEL,
-                    messages=[
-                        {"role": "system", "content": system_prompt},
-                        {"role": "user", "content": f"Requirement: {user_input}"}
-                    ],
-                    # Mandate JSON output for reliability
-                    response_format={"type": "json_object"}
-                )
-
-                generated_json_text = completion.choices[0].message.content
-
-            # Attempt to parse and re-format the JSON for clean display
-            try:
-                # Validate and re-format the JSON
-                parsed_json = json.loads(generated_json_text)
-                formatted_json = json.dumps(parsed_json, indent=4)
-
-            except json.JSONDecodeError:
-                # This should rarely happen with response_format="json_object"
-                formatted_json = generated_json_text
-                st.error("Warning: The generated content is not perfectly valid JSON, displaying raw text.")
-
-            # Display the JSON
-            st.subheader("Generated JSON Output")
-            st.code(formatted_json, language="json")
-
-            # Download
-            st.download_button(
-                label="Download JSON",
-                data=formatted_json,
-                file_name="generated_form_llama3.json",
-                mime="application/json"
-            )
-
-        except Exception as e:
-            st.error(f"An error occurred during Groq API call: {e}")
-
+        messages_payload = [
+            {"role": "system", "content": system_instruction},
+            {"role": "user", "content": f"Please generate a complete JSON structure based on this requirement: {prompt}"}
+        ]
+        
     else:
-        st.warning("Please enter a requirement before clicking Generate.")
+        # Iterative Editing Mode
+        current_json = st.session_state['generated_json']
+        system_instruction = f"""You are a JSON form editing assistant. You MUST modify the provided CURRENT JSON based on the user's request.
+**CURRENT JSON**: {current_json}
 
+**MANDATORY**: Your response MUST be ONLY the complete, modified JSON object. Do not include any narrative or markdown outside of the JSON block.
+**CRITICAL**: You MUST preserve all fields not explicitly requested to be changed.
+**SCHEMA REMINDER**: Adhere to the structure in the JSON Structure Example. Use a sorting_value that is appropriate relative to existing fields.
+
+JSON Structure Example (Do not modify the JSON structure itself):
+{JSON_STRUCTURE_EXAMPLE}
+"""
+        messages_payload = [
+            {"role": "system", "content": system_instruction},
+            {"role": "user", "content": f"Please apply this change to the current JSON: {prompt}"}
+        ]
+
+
+    # 2. Call the Groq API
+    try:
+        completion = client.chat.completions.create(
+            model=LLAMA3_MODEL,
+            messages=messages_payload,
+            response_format={"type": "json_object"}
+        )
+
+        generated_text = completion.choices[0].message.content
+        
+        # 3. Process the model's response (which should be pure JSON)
+        try:
+            # Validate and format the JSON
+            parsed_json = json.loads(generated_text)
+            formatted_json = json.dumps(parsed_json, indent=4)
+            
+            # Update state
+            st.session_state['generated_json'] = formatted_json
+            st.session_state['is_initial'] = False
+            
+            # Generate a conversational response for the chat history
+            if is_initial:
+                return "✅ Initial JSON structure generated successfully. You can now tell me what to modify (e.g., 'Add a field for Total Tax' or 'Change InvoiceID to start with 100')."
+            else:
+                return "🔄 JSON updated successfully based on your feedback."
+
+        except json.JSONDecodeError:
+            return f"❌ Error: Model did not return valid JSON. Raw Output: {generated_text[:200]}..."
+
+    except Exception as e:
+        return f"❌ API Error: {e}"
+
+
+# --- 5. STREAMLIT UI LAYOUT ---
+st.set_page_config(page_title="JSON Editor Chat", page_icon="💬", layout="wide")
+st.title("🗂️ Conversational Form Editor (Llama 3.3)")
+st.markdown("Enter your requirement below. The model will create a JSON structure, and you can refine it continuously through chat.")
+
+# Create two columns for the split view
+col1, col2 = st.columns([1, 1])
+
+with col1:
+    st.subheader("Chat Interface")
+    
+    # Display the chat history
+    for message in st.session_state['messages']:
+        with st.chat_message(message["role"]):
+            st.markdown(message["content"])
+
+    # Handle new user input
+    if prompt := st.chat_input("Enter your initial form requirement or a modification..."):
+        # Add user message to state
+        st.session_state['messages'].append({"role": "user", "content": prompt})
+        
+        # Re-display user message
+        with st.chat_message("user"):
+            st.markdown(prompt)
+            
+        # Get response from the model
+        if client:
+            with st.spinner(f"Processing request with {LLAMA3_MODEL}..."):
+                assistant_response_text = generate_or_edit_json(prompt)
+        else:
+            assistant_response_text = "❌ Groq client is not initialized. Check API key configuration."
+
+        # Add assistant response (narrative) to state
+        st.session_state['messages'].append({"role": "assistant", "content": assistant_response_text})
+        
+        # Display assistant message
+        with st.chat_message("assistant"):
+            st.markdown(assistant_response_text)
+        
+        # Rerun to update the JSON display in col2
+        st.experimental_rerun()
+
+
+with col2:
+    st.subheader("Current Generated JSON")
+    
+    # Display the latest generated JSON artifact
+    st.code(st.session_state['generated_json'], language="json")
+    
+    # Download button for the current artifact
+    st.download_button(
+        label="Download Current JSON",
+        data=st.session_state['generated_json'],
+        file_name="generated_form_latest.json",
+        mime="application/json"
+    )
+
+    if st.session_state['is_initial']:
+        st.info("Start by entering your form requirement (e.g., 'Create a Purchase Order form with fields for Vendor, Item, Quantity, and Price').")
+    else:
+        st.success("Refine the JSON using the chat interface on the left.")
