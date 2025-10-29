@@ -6,7 +6,7 @@ GROQ_API_KEY = "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"
 
 # Initialize the Groq client and model name
 client = None
-LLAMA3_MODEL = 'llama-3.3-70b-versatile' # Confirmed replacement model
+LLAMA3_MODEL = 'llama-3.3-70b-versatile' 
 
 if GROQ_API_KEY:
     try:
@@ -18,7 +18,7 @@ if GROQ_API_KEY:
 if 'messages' not in st.session_state:
     st.session_state['messages'] = []
 if 'generated_json' not in st.session_state:
-    # Use a dummy initial structure to check if generation has occurred
+# Use a dummy initial structure to check if generation has occurred
     st.session_state['generated_json'] = '{"formData": {"newformName": "Draft Form"}, "fieldsData": []}'
 if 'is_initial' not in st.session_state:
     st.session_state['is_initial'] = True
@@ -206,5 +206,6 @@ with col2:
         st.info("Start by entering your form requirement (e.g., 'Create a Purchase Order form with fields for Vendor, Item, Quantity, and Price').")
     else:
         st.success("Refine the JSON using the chat interface on the left.")
+
 
 
