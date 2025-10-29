@@ -2,9 +2,6 @@ import streamlit as st
 from groq import Groq
 import json
 
-# --- 1. API KEY CONFIGURATION ---
-# NOTE: The user has explicitly provided their Groq API key for testing.
-# For production Streamlit apps, it is HIGHLY recommended to use st.secrets.
 GROQ_API_KEY = "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"
 
 # Initialize the Groq client and model name
@@ -17,7 +14,6 @@ if GROQ_API_KEY:
     except Exception as e:
         st.error(f"Failed to initialize Groq client: {e}")
 
-# --- 2. SESSION STATE MANAGEMENT ---
 # Initialize session state for continuous chat and JSON artifact
 if 'messages' not in st.session_state:
     st.session_state['messages'] = []
@@ -150,7 +146,7 @@ JSON Structure Example (Do not modify the JSON structure itself):
 
 # --- 5. STREAMLIT UI LAYOUT ---
 st.set_page_config(page_title="JSON Editor Chat", page_icon="💬", layout="wide")
-st.title("🗂️ Conversational Form Editor (Llama 3.3)")
+st.title("Needlu Form Generator (Llama 3.3)")
 st.markdown("Enter your requirement below. The model will create a JSON structure, and you can refine it continuously through chat.")
 
 # Create two columns for the split view
@@ -210,3 +206,4 @@ with col2:
         st.info("Start by entering your form requirement (e.g., 'Create a Purchase Order form with fields for Vendor, Item, Quantity, and Price').")
     else:
         st.success("Refine the JSON using the chat interface on the left.")
+
