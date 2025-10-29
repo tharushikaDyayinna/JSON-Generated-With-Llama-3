@@ -1,32 +1,43 @@
 import streamlit as st
 from groq import Groq
 import json
-import os # Recommended to load API keys from environment variables
 
 
-GROQ_API_KEY = "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" 
+GROQ_API_KEY = "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"
+
+# If you prefer using Streamlit Secrets for better security, you can
+# uncomment the block below and remove the direct assignment above:
+# try:
+#     GROQ_API_KEY = st.secrets["GROQ_API_KEY"]
+# except KeyError:
+#     st.error("GROQ_API_KEY not found in Streamlit Secrets. Please configure it in your app's secrets settings.")
+#     GROQ_API_KEY = None # Ensure the key is None if not found
 
 # Initialize the Groq client
-try:
-    client = Groq(api_key=GROQ_API_KEY)
-    # Using Llama 3 70B for high-quality structured generation
-    LLAMA3_MODEL = 'llama-3.1-70b-8192'
-except Exception as e:
-    st.error(f"Failed to initialize Groq client. Please check your API key: {e}")
-    client = None
+client = None
+if GROQ_API_KEY:
+    try:
+        client = Groq(api_key=GROQ_API_KEY)
+        # Using Llama 3 70B for high-quality structured generation
+        LLAMA3_MODEL = 'llama3-70b-8192'
+    except Exception as e:
+        st.error(f"Failed to initialize Groq client: {e}")
 
 # --- Streamlit App Setup ---
-st.set_page_config(page_title="JSON (Llama 3)", page_icon="", layout="centered")
+st.set_page_config(page_title="Form JSON Generator (Llama 3)", page_icon="", layout="centered")
 st.title("System Form JSON Generator (Llama 3)")
-st.markdown("Enter your system creation requirement")
+#st.markdown("Enter your system creation requirement, and Llama 3 will generate a complete, detailed JSON structure.")
 
 user_input = st.text_area("Enter your system creation requirement :", "", height=150)
 
 if st.button("Generate JSON"):
-    if not client:
+    if not GROQ_API_KEY:
+        # This branch should only be reached if the key is None (e.g., if you switch back to secrets and it fails)
+        st.error("Cannot proceed. The Groq API key is not configured.")
+    elif not client:
         st.error("Cannot proceed. Groq client failed to initialize.")
     elif user_input.strip():
-        
+
         # Define the JSON structure example for context and schema definition
         json_structure_example = """{
             "formData": {
@@ -140,7 +151,7 @@ if st.button("Generate JSON"):
                 }
             ]
         }"""
-        
+
         # Define the JSON schema to enforce the output structure
         json_schema = json.loads(json_structure_example)
 
@@ -176,15 +187,15 @@ JSON Structure Example (Use this exact schema):
                     # Mandate JSON output for reliability
                     response_format={"type": "json_object"}
                 )
-                
+
                 generated_json_text = completion.choices[0].message.content
-                
+
             # Attempt to parse and re-format the JSON for clean display
             try:
                 # Validate and re-format the JSON
                 parsed_json = json.loads(generated_json_text)
                 formatted_json = json.dumps(parsed_json, indent=4)
-                
+
             except json.JSONDecodeError:
                 # This should rarely happen with response_format="json_object"
                 formatted_json = generated_json_text
@@ -201,12 +212,9 @@ JSON Structure Example (Use this exact schema):
                 file_name="generated_form_llama3.json",
                 mime="application/json"
             )
-            
+
         except Exception as e:
-            st.error(f"An error occurred during Groq API call. Ensure your API key is correct and the `groq` library is installed: {e}")
+            st.error(f"An error occurred during Groq API call: {e}")
 
     else:
         st.warning("Please enter a requirement before clicking Generate.")
-
-
-
