@@ -188,7 +188,8 @@ with col1:
             st.markdown(assistant_response_text)
         
         # Rerun to update the JSON display in col2
-        st.experimental_rerun()
+        # FIX: Replaced st.experimental_rerun() with st.rerun()
+        st.rerun()
 
 
 with col2:
