@@ -24,11 +24,12 @@ if 'is_initial' not in st.session_state:
     st.session_state['is_initial'] = True
 
 # --- 3. JSON SCHEMA DEFINITION (Used for prompting) ---
+# --- 3. JSON SCHEMA DEFINITION (Used for prompting) ---
 JSON_STRUCTURE_EXAMPLE = """{
     "formData": {
         "entType": "T Department",
         "formCat": "T Form",
-        "newformName": "Invoice",
+        "newformName": "Invoice", 
         "frequency": "any",
         "editable": 1,
         "deletable": 1,
@@ -37,8 +38,8 @@ JSON_STRUCTURE_EXAMPLE = """{
     },
     "fieldsData": [
         {
-            "data_name": "FieldName",
-            "data_type": "text/options/date/calculation/sequence",
+            "data_name": "InvoiceID",
+            "data_type": "sequence",
             "sorting_value": "1",
             "identifier": 0,
             "options_from": "",
@@ -47,7 +48,35 @@ JSON_STRUCTURE_EXAMPLE = """{
             "defaultVal": "",
             "features": "",
             "inherit": 0,
-            "attributes": "",
+            "attributes": "readonly",
+            "entityMethod": "",
+            "entityOrLevel": "",
+            "mapping": [],
+            "keyMember": 0,
+            "sumClass": "",
+            "data_info": "",
+            "help_text": "",
+            "sum_func": "",
+            "countIf": "",
+            "decimals": "0",
+            "prefix": "INV",
+            "sufix": "",
+            "digits": "5",
+            "replacer": "0",
+            "start_with": "1"
+        },
+        {
+            "data_name": "CustomerName",
+            "data_type": "options",
+            "sorting_value": "2",
+            "identifier": 0,
+            "options_from": "CustomerEntity",
+            "fetch_function": "",
+            "calculation": "",
+            "defaultVal": "",
+            "features": "",
+            "inherit": 0,
+            "attributes": "required",
             "entityMethod": "",
             "entityOrLevel": "",
             "mapping": [],
@@ -58,15 +87,127 @@ JSON_STRUCTURE_EXAMPLE = """{
             "sum_func": "",
             "countIf": "",
             "decimals": "",
-            "prefix": "",
-            "sufix": "",
-            "digits": "",
-            "replacer": "",
-            "start_with": "",
-            "formName": ""
+            "formName": "Customers"
+        },
+        {
+            "data_name": "InvoiceDate",
+            "data_type": "date",
+            "sorting_value": "3",
+            "identifier": 0,
+            "options_from": "",
+            "fetch_function": "",
+            "calculation": "",
+            "defaultVal": "TODAY",
+            "features": "",
+            "inherit": 0,
+            "attributes": "required",
+            "entityMethod": "",
+            "entityOrLevel": "",
+            "mapping": [],
+            "keyMember": 0,
+            "sumClass": "",
+            "data_info": "",
+            "help_text": "",
+            "sum_func": "",
+            "countIf": "",
+            "decimals": ""
+        },
+        {
+            "data_name": "ProductID",
+            "data_type": "text",
+            "sorting_value": "4",
+            "identifier": 0,
+            "options_from": "ProductsEntity",
+            "fetch_function": "",
+            "calculation": "",
+            "defaultVal": "",
+            "features": "",
+            "inherit": 0,
+            "attributes": "required",
+            "entityMethod": "",
+            "entityOrLevel": "",
+            "mapping": [],
+            "keyMember": 0,
+            "sumClass": "",
+            "data_info": "",
+            "help_text": "",
+            "sum_func": "",
+            "countIf": "",
+            "decimals": ""
+            
+        },
+        {
+            "data_name": "Quantity",
+            "data_type": "number",
+            "sorting_value": "5",
+            "identifier": 0,
+            "options_from": "",
+            "fetch_function": "",
+            "calculation": "",
+            "defaultVal": "",
+            "features": "",
+            "inherit": 0,
+            "attributes": "required",
+            "entityMethod": "",
+            "entityOrLevel": "",
+            "mapping": [],
+            "keyMember": 0,
+            "sumClass": "",
+            "data_info": "",
+            "help_text": "",
+            "sum_func": "",
+            "countIf": "",
+            "decimals": "0"
+        },
+        {
+            "data_name": "UnitPrice",
+            "data_type": "number",
+            "sorting_value": "6",
+            "identifier": 0,
+            "options_from": "",
+            "fetch_function": "",
+            "calculation": "",
+            "defaultVal": "",
+            "features": "",
+            "inherit": 0,
+            "attributes": "required",
+            "entityMethod": "",
+            "entityOrLevel": "",
+            "mapping": [],
+            "keyMember": 0,
+            "sumClass": "",
+            "data_info": "",
+            "help_text": "",
+            "sum_func": "",
+            "countIf": "",
+            "decimals": "2"
+        },
+        {
+            "data_name": "LineTotal",
+            "data_type": "calculation",
+            "sorting_value": "7",
+            "identifier": 0,
+            "options_from": "",
+            "fetch_function": "",
+            "calculation": "{GoodsReceived^QuantityReceived^GoodsReceived.GRNLineID,RequestForm.CurrentLine,=} * {PurchaseOrder^UnitPrice^PurchaseOrder.POLineID,RequestForm.CurrentLine,=}",
+            "defaultVal": "",
+            "features": "",
+            "inherit": 0,
+            "attributes": "readonly",
+            "entityMethod": "",
+            "entityOrLevel": "",
+            "mapping": [],
+            "keyMember": 0,
+            "sumClass": "",
+            "data_info": "",
+            "help_text": "",
+            "sum_func": "",
+            "countIf": "",
+            "decimals": "2"
         }
     ]
 }"""
+
 
 # --- 4. CORE GENERATION / EDITING FUNCTION ---
 def generate_or_edit_json(prompt):
@@ -206,6 +347,7 @@ with col2:
         st.info("Start by entering your form requirement (e.g., 'Create a Purchase Order form with fields for Vendor, Item, Quantity, and Price').")
     else:
         st.success("Refine the JSON using the chat interface on the left.")
+
 
 
 
