@@ -24,7 +24,6 @@ if 'is_initial' not in st.session_state:
     st.session_state['is_initial'] = True
 
 # --- 3. JSON SCHEMA DEFINITION (Used for prompting) ---
-# --- 3. JSON SCHEMA DEFINITION (Used for prompting) ---
 JSON_STRUCTURE_EXAMPLE = """{
     "formData": {
         "entType": "T Department",
@@ -347,6 +346,7 @@ with col2:
         st.info("Start by entering your form requirement (e.g., 'Create a Purchase Order form with fields for Vendor, Item, Quantity, and Price').")
     else:
         st.success("Refine the JSON using the chat interface on the left.")
+
 
 
 
