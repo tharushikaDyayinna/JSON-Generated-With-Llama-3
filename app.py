@@ -306,8 +306,8 @@ with col1:
         st.session_state['messages'].append({"role": "user", "content": prompt})
         
         # Re-display user message
-        #with st.chat_message("user"):
-        #    st.markdown(prompt)
+        # with st.chat_message("user"):
+        # st.markdown(prompt)
             
         # Get response from the model
         if client:
@@ -346,6 +346,7 @@ with col2:
         st.info("Start by entering your form requirement (e.g., 'Create a Purchase Order form with fields for Vendor, Item, Quantity, and Price').")
     else:
         st.success("Refine the JSON using the chat interface on the left.")
+
 
 
 
