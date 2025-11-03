@@ -2,7 +2,7 @@ import streamlit as st
 from groq import Groq
 import json
 
-GROQ_API_KEY = "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"
+GROQ_API_KEY = "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"
 
 # Initialize the Groq client and model name
 client = None
@@ -346,6 +346,7 @@ with col2:
         st.info("Start by entering your form requirement (e.g., 'Create a Purchase Order form with fields for Vendor, Item, Quantity, and Price').")
     else:
         st.success("Refine the JSON using the chat interface on the left.")
+
 
 
 
