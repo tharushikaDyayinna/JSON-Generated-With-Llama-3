@@ -314,7 +314,7 @@ JSON Structure Example (Do not modify the JSON structure itself):
 # --- 5. STREAMLIT UI LAYOUT (Kept identical) ---
 st.set_page_config(page_title="JSON Editor Chat", page_icon="https://www.needlu.com/webImage/needluLogoV.png", layout="wide")
 st.title("Needlu Form Generator")
-st.markdown("Enter your requirement below. The model will create a JSON structure, and you can refine it continuously through chat.")
+st.markdown("Enter your requirement below.")
 
 # Create two columns for the split view
 col1, col2 = st.columns([1, 1])
@@ -370,4 +370,5 @@ with col2:
         st.info("Start by entering your form requirement (e.g., 'Create a Purchase Order form with fields for Vendor, Item, Quantity, and Price').")
     else:
         st.success("Refine the JSON using the chat interface on the left.")
+
 
