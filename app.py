@@ -31,9 +31,9 @@ if 'is_initial' not in st.session_state:
 # --- 3. JSON SCHEMA DEFINITION (Used for prompting) ---
 JSON_STRUCTURE_EXAMPLE = """{
     "formData": {
-        "entType": "T Department",
-        "formCat": "T Form",
-        "newformName": "Invoice", 
+        "entityType": "T Department",
+        "formCategory": "T Form",
+        "formName": "Invoice", 
         "frequency": "any",
         "editable": 1,
         "deletable": 1,
@@ -370,6 +370,7 @@ with col2:
         st.info("Start by entering your form requirement (e.g., 'Create a Purchase Order form with fields for Vendor, Item, Quantity, and Price').")
     else:
         st.success("Refine the JSON using the chat interface on the left.")
+
 
 
 
