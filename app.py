@@ -335,7 +335,7 @@ with col1:
         # Get response from the model
         if client:
             # Use GEMINI_MODEL name in the spinner
-            with st.spinner(f"Processing request with {GEMINI_MODEL}..."):
+            with st.spinner(f"Processing"):
                 assistant_response_text = generate_or_edit_json(prompt)
         else:
             # Updated error message for Google client
@@ -370,3 +370,4 @@ with col2:
         st.info("Start by entering your form requirement (e.g., 'Create a Purchase Order form with fields for Vendor, Item, Quantity, and Price').")
     else:
         st.success("Refine the JSON using the chat interface on the left.")
+
