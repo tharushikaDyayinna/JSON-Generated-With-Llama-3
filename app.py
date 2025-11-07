@@ -193,7 +193,7 @@ JSON_STRUCTURE_EXAMPLE = """{
             "identifier": 0,
             "options_from": "",
             "fetch_function": "",
-            "calculation": "{GoodsReceived^QuantityReceived^GoodsReceived.GRNLineID,RequestForm.CurrentLine,=} * {PurchaseOrder^UnitPrice^PurchaseOrder.POLineID,RequestForm.CurrentLine,=}",
+            "calculation": "{GoodsReceived^QuantityReceived^GoodsReceived.GRNLineID,Invoice.ProductID,=} * {PurchaseOrder^UnitPrice^PurchaseOrder.POLineID,Invoice.ProductID,=}",
             "defaultVal": "",
             "features": "",
             "inherit": 0,
@@ -370,6 +370,7 @@ with col2:
         st.info("Start by entering your form requirement (e.g., 'Create a Purchase Order form with fields for Vendor, Item, Quantity, and Price').")
     else:
         st.success("Refine the JSON using the chat interface on the left.")
+
 
 
 
