@@ -224,7 +224,8 @@ def generate_or_edit_json(prompt):
         # Initial Generation Mode
         # --- CORRECTED PROMPT INSTRUCTION ---
         # The user's detailed instructions are integrated here as the system prompt.
-        system_instruction = f"""Generate a complete JSON object for the following system creation requirement.
+        
+                system_instruction = f"""Generate a complete JSON object for the following system creation requirement.
         
 **MANDATORY**: Your response MUST be ONLY the complete, valid JSON object. Do not include any narrative or markdown outside of the JSON block.
 
@@ -240,19 +241,23 @@ Where fm=form name, fd=field name of value needed, rfx=reference field in curren
 **IMPORTANT INSTRUCTION FOR CALCULATION**: Calculations must use one of the following two formats.
 Use the complex format when a value needs to be fetched from another form within the calculation.
 
-1. Simple internal reference: **{{FormName.FieldName}}**
-(e.g., {{Invoice.Quantity}} * {{Invoice.Price}})
+1. Simple internal reference (MANDATORY FORMAT):  
+If the calculation comes as a simple internal reference, it **must strictly follow** the format `{{FormName.FieldName}}`.  
+✅ Example: `{{Invoice.Quantity}} * {{Invoice.Price}}`  
+❌ Invalid examples: `{Invoice.Quantity}`, `Invoice.Quantity`, or missing double curly braces.  
+The double curly braces `{{ }}` and dot notation `FormName.FieldName` are **mandatory**.
 
-2. Complex cross-form reference (to fetch values and calculate):
-**{{SourceForm^SourceField^MappingField,CurrentValue,Operator}}** —
-The entire formula must be written as a **single JSON string** (no + signs or concatenation between strings).
-The operator between expressions can be **+, -, *, or /** depending on the mathematical logic required.
-Use this structure exactly:
+2. Complex cross-form reference (to fetch values and calculate):  
+**{{SourceForm^SourceField^MappingField,CurrentValue,Operator}}** —  
+The entire formula must be written as a **single JSON string** (no + signs or concatenation between strings).  
+The operator between expressions can be **+, -, *, or /** depending on the mathematical logic required.  
+Use this structure exactly:  
 (e.g., {{GoodsReceived^QuantityReceived^GoodsReceived.GRNLineID,Invoice.ProductID,=}} * {{PurchaseOrder^UnitPrice^PurchaseOrder.POLineID,Invoice.ProductID,=}})
 
 JSON Structure Example (Use this exact schema for every field and match the structure of fields like 'sequence', 'options', and 'calculation'):
 {JSON_STRUCTURE_EXAMPLE}
 """
+
         # The user's requirement is passed in the user_content part
         user_content = f"Requirement: {prompt}"
         
@@ -371,6 +376,7 @@ with col2:
         st.info("Start by entering your form requirement (e.g., 'Create a Purchase Order form with fields for Vendor, Item, Quantity, and Price').")
     else:
         st.success("Refine the JSON using the chat interface on the left.")
+
 
 
 
