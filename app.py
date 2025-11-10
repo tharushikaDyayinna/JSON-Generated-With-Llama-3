@@ -4,7 +4,6 @@ from google.genai import types
 import json
 
 # --- 1. API Key and Client Initialization ---
-# The API key you provided. Note: Real keys should be stored securely.
 GOOGLE_API_KEY = "AIzaSyBlLsEjhgb98CB_pKeDTsTxpgGItvQFzLg"
 
 # Initialize the Google GenAI client and model name
@@ -222,10 +221,8 @@ def generate_or_edit_json(prompt):
     
     if is_initial:
         # Initial Generation Mode
-        # --- CORRECTED PROMPT INSTRUCTION ---
-        # The user's detailed instructions are integrated here as the system prompt.
-        
-                system_instruction = f"""Generate a complete JSON object for the following system creation requirement.
+        # --- UPDATED PROMPT WITH MANDATORY RULE ---
+        system_instruction = f"""Generate a complete JSON object for the following system creation requirement.
         
 **MANDATORY**: Your response MUST be ONLY the complete, valid JSON object. Do not include any narrative or markdown outside of the JSON block.
 
@@ -257,8 +254,6 @@ Use this structure exactly:
 JSON Structure Example (Use this exact schema for every field and match the structure of fields like 'sequence', 'options', and 'calculation'):
 {JSON_STRUCTURE_EXAMPLE}
 """
-
-        # The user's requirement is passed in the user_content part
         user_content = f"Requirement: {prompt}"
         
     else:
@@ -283,7 +278,6 @@ JSON Structure Example (Do not modify the JSON structure itself):
 
     # 2. Call the Google GenAI API
     try:
-        # The prompt is constructed by combining the system instruction and user content
         full_prompt = f"System Instruction:\n{system_instruction}\n\nUser Request:\n{user_content}"
         
         completion = client.models.generate_content(
@@ -294,17 +288,13 @@ JSON Structure Example (Do not modify the JSON structure itself):
 
         generated_text = completion.text
         
-        # 3. Process the model's response (which should be pure JSON)
         try:
-            # Validate and format the JSON
             parsed_json = json.loads(generated_text)
             formatted_json = json.dumps(parsed_json, indent=4)
             
-            # Update state
             st.session_state['generated_json'] = formatted_json
             st.session_state['is_initial'] = False
             
-            # Generate a conversational response for the chat history
             if is_initial:
                 return "Initial JSON structure generated successfully. You can now tell me what to modify (e.g., 'Add a field for Total Tax' or 'Change InvoiceID to start with 100')."
             else:
@@ -317,54 +307,42 @@ JSON Structure Example (Do not modify the JSON structure itself):
         return f"❌ API Error: {e}"
 
 
-# --- 5. STREAMLIT UI LAYOUT (Kept identical) ---
+# --- 5. STREAMLIT UI LAYOUT ---
 st.set_page_config(page_title="JSON Editor Chat", page_icon="https://www.needlu.com/webImage/needluLogoV.png", layout="wide")
 st.title("Needlu Form Generator")
 st.markdown("Enter your requirement below.")
 
-# Create two columns for the split view
 col1, col2 = st.columns([1, 1])
 
 with col1:
     st.subheader("Chat Interface")
     
-    # Display the chat history
     for message in st.session_state['messages']:
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
 
-    # Handle new user input
     if prompt := st.chat_input("Enter your initial form requirement or a modification"):
-        # Add user message to state
         st.session_state['messages'].append({"role": "user", "content": prompt})
         
-        # Get response from the model
         if client:
-            # Use GEMINI_MODEL name in the spinner
             with st.spinner(f"Processing"):
                 assistant_response_text = generate_or_edit_json(prompt)
         else:
-            # Updated error message for Google client
             assistant_response_text = "❌ Google GenAI client is not initialized. Check API key configuration."
 
-        # Add assistant response (narrative) to state
         st.session_state['messages'].append({"role": "assistant", "content": assistant_response_text})
         
-        # Display assistant message
         with st.chat_message("assistant"):
             st.markdown(assistant_response_text)
         
-        # Rerun to update the JSON display in col2
         st.rerun()
 
 
 with col2:
     st.subheader("Current Generated JSON")
     
-    # Display the latest generated JSON artifact
     st.code(st.session_state['generated_json'], language="json")
     
-    # Download button for the current artifact
     st.download_button(
         label="Download Current JSON",
         data=st.session_state['generated_json'],
@@ -376,11 +354,3 @@ with col2:
         st.info("Start by entering your form requirement (e.g., 'Create a Purchase Order form with fields for Vendor, Item, Quantity, and Price').")
     else:
         st.success("Refine the JSON using the chat interface on the left.")
-
-
-
-
-
-
-
-
