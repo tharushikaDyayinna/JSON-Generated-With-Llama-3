@@ -214,42 +214,40 @@ JSON_STRUCTURE_EXAMPLE = """{
 
 # --- 4. CORE GENERATION / EDITING FUNCTION (Updated for Gemini) ---
 def generate_or_edit_json(prompt):
-    """Handles both initial JSON generation and subsequent iterative editing using the Gemini API."""
+    system_instruction = f"""Generate a complete JSON object for the following system creation requirement.
 
-    # 1. Determine the mode and construct the system prompt
-    is_initial = st.session_state['is_initial']
-    
-    if is_initial:
-        # Initial Generation Mode
-        # --- UPDATED PROMPT WITH MANDATORY RULE ---
-        system_instruction = f"""Generate a complete JSON object for the following system creation requirement.
-        
 **MANDATORY**: Your response MUST be ONLY the complete, valid JSON object. Do not include any narrative or markdown outside of the JSON block.
 
 **CRITICAL INSTRUCTION**: Every object generated within the "fieldsData" array MUST strictly adhere to the full structure provided in the JSON Structure Example, including all keys.
 **MANDATORY**: The value for the `help_text` key MUST ALWAYS be an empty string ("") for ALL fields.
-**MANDATORY DATA TYPES**: The 'data_type' key MUST ONLY use one of these values: **sequence, options, date, text, number, calculation**. Do not use any other data types.
-**SPECIAL INSTRUCTION FOR OPTIONS**: For any field with data_type: "options", you **MUST** include the "formName" key to specify the source form.
+**MANDATORY DATA TYPES**: The 'data_type' key MUST ONLY use one of these values: sequence, options, date, text, number, calculation. Do not use any other data types.
+**SPECIAL INSTRUCTION FOR OPTIONS**: For any field with data_type: "options", you MUST include the "formName" key to specify the source form.
 
-**SPECIAL INSTRUCTION FOR FETCH_FUNCTION**: If the user asks to fetch or look up data from another form into a static field, use the `fetch_function` key with the following syntax:
-`fm^fd^rf1,tf1,lo1 and rf2,tf2,lo2 ^ Entity Level Type`
-Where fm=form name, fd=field name of value needed, rfx=reference field in current form, tfx=target field in fm, lox=logic (EQUAL, GREATER, LESS, etc.).
+**SPECIAL INSTRUCTION FOR FETCH_FUNCTION**: If the user asks to fetch or look up data from another form into a static field, use the fetch_function key with the following syntax:
+fm^fd^rf1,tf1,lo1 and rf2,tf2,lo2 ^ Entity Level Type
+Where:
+- fm = form name
+- fd = field name of value needed
+- rfx = reference field in current form
+- tfx = target field in fm
+- lox = logic (EQUAL, GREATER, LESS, etc.)
 
 **IMPORTANT INSTRUCTION FOR CALCULATION**: Calculations must use one of the following two formats.
 Use the complex format when a value needs to be fetched from another form within the calculation.
 
-1. Simple internal reference (MANDATORY FORMAT):  
-If the calculation comes as a simple internal reference, it **must strictly follow** the format `{{FormName.FieldName}}`.  
-✅ Example: `{{Invoice.Quantity}} * {{Invoice.Price}}`  
-❌ Invalid examples: `{Invoice.Quantity}`, `Invoice.Quantity`, or missing double curly braces.  
-The double curly braces `{{ }}` and dot notation `FormName.FieldName` are **mandatory**.
+1. Simple internal reference (MANDATORY FORMAT):
+If the calculation comes as a simple internal reference, it must strictly follow the format {{FormName.FieldName}}.
+Example (valid): {{Invoice.Quantity}} * {{Invoice.Price}}
+Invalid examples (will be rejected): {{Invoice.Quantity}}, Invoice.Quantity, or missing double curly braces.
+The double curly braces {{ }} and dot notation FormName.FieldName are mandatory.
 
-2. Complex cross-form reference (to fetch values and calculate):  
-**{{SourceForm^SourceField^MappingField,CurrentValue,Operator}}** —  
-The entire formula must be written as a **single JSON string** (no + signs or concatenation between strings).  
-The operator between expressions can be **+, -, *, or /** depending on the mathematical logic required.  
-Use this structure exactly:  
-(e.g., {{GoodsReceived^QuantityReceived^GoodsReceived.GRNLineID,Invoice.ProductID,=}} * {{PurchaseOrder^UnitPrice^PurchaseOrder.POLineID,Invoice.ProductID,=}})
+2. Complex cross-form reference (to fetch values and calculate):
+{{SourceForm^SourceField^MappingField,CurrentValue,Operator}} —
+The entire formula must be written as a single JSON string (no + signs or concatenation between strings).
+The operator between expressions can be +, -, *, or / depending on the mathematical logic required.
+Use this structure exactly:
+Example:
+{{GoodsReceived^QuantityReceived^GoodsReceived.GRNLineID,Invoice.ProductID,=}} * {{PurchaseOrder^UnitPrice^PurchaseOrder.POLineID,Invoice.ProductID,=}}
 
 JSON Structure Example (Use this exact schema for every field and match the structure of fields like 'sequence', 'options', and 'calculation'):
 {JSON_STRUCTURE_EXAMPLE}
@@ -354,3 +352,4 @@ with col2:
         st.info("Start by entering your form requirement (e.g., 'Create a Purchase Order form with fields for Vendor, Item, Quantity, and Price').")
     else:
         st.success("Refine the JSON using the chat interface on the left.")
+
