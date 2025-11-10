@@ -4,6 +4,7 @@ from google.genai import types
 import json
 
 # --- 1. API Key and Client Initialization ---
+# The API key you provided. Note: Real keys should be stored securely.
 GOOGLE_API_KEY = "AIzaSyBlLsEjhgb98CB_pKeDTsTxpgGItvQFzLg"
 
 # Initialize the Google GenAI client and model name
@@ -214,44 +215,45 @@ JSON_STRUCTURE_EXAMPLE = """{
 
 # --- 4. CORE GENERATION / EDITING FUNCTION (Updated for Gemini) ---
 def generate_or_edit_json(prompt):
-    system_instruction = f"""Generate a complete JSON object for the following system creation requirement.
+    """Handles both initial JSON generation and subsequent iterative editing using the Gemini API."""
 
+    # 1. Determine the mode and construct the system prompt
+    is_initial = st.session_state['is_initial']
+    
+    if is_initial:
+        # Initial Generation Mode
+        # --- CORRECTED PROMPT INSTRUCTION ---
+        # The user's detailed instructions are integrated here as the system prompt.
+        system_instruction = f"""Generate a complete JSON object for the following system creation requirement.
+        
 **MANDATORY**: Your response MUST be ONLY the complete, valid JSON object. Do not include any narrative or markdown outside of the JSON block.
 
 **CRITICAL INSTRUCTION**: Every object generated within the "fieldsData" array MUST strictly adhere to the full structure provided in the JSON Structure Example, including all keys.
 **MANDATORY**: The value for the `help_text` key MUST ALWAYS be an empty string ("") for ALL fields.
-**MANDATORY DATA TYPES**: The 'data_type' key MUST ONLY use one of these values: sequence, options, date, text, number, calculation. Do not use any other data types.
-**SPECIAL INSTRUCTION FOR OPTIONS**: For any field with data_type: "options", you MUST include the "formName" key to specify the source form.
+**MANDATORY DATA TYPES**: The 'data_type' key MUST ONLY use one of these values: **sequence, options, date, text, number, calculation**. Do not use any other data types.
+**SPECIAL INSTRUCTION FOR OPTIONS**: For any field with data_type: "options", you **MUST** include the "formName" key to specify the source form.
 
-**SPECIAL INSTRUCTION FOR FETCH_FUNCTION**: If the user asks to fetch or look up data from another form into a static field, use the fetch_function key with the following syntax:
-fm^fd^rf1,tf1,lo1 and rf2,tf2,lo2 ^ Entity Level Type
-Where:
-- fm = form name
-- fd = field name of value needed
-- rfx = reference field in current form
-- tfx = target field in fm
-- lox = logic (EQUAL, GREATER, LESS, etc.)
+**SPECIAL INSTRUCTION FOR FETCH_FUNCTION**: If the user asks to fetch or look up data from another form into a static field, use the `fetch_function` key with the following syntax:
+`fm^fd^rf1,tf1,lo1 and rf2,tf2,lo2 ^ Entity Level Type`
+Where fm=form name, fd=field name of value needed, rfx=reference field in current form, tfx=target field in fm, lox=logic (EQUAL, GREATER, LESS, etc.).
 
 **IMPORTANT INSTRUCTION FOR CALCULATION**: Calculations must use one of the following two formats.
 Use the complex format when a value needs to be fetched from another form within the calculation.
 
-1. Simple internal reference (MANDATORY FORMAT):
-If the calculation comes as a simple internal reference, it must strictly follow the format {{FormName.FieldName}}.
-Example (valid): {{Invoice.Quantity}} * {{Invoice.Price}}
-Invalid examples (will be rejected): {{Invoice.Quantity}}, Invoice.Quantity, or missing double curly braces.
-The double curly braces {{ }} and dot notation FormName.FieldName are mandatory.
+1. Simple internal reference: **{{FormName.FieldName}}**
+(e.g., {{Invoice.Quantity}} * {{Invoice.Price}})
 
 2. Complex cross-form reference (to fetch values and calculate):
-{{SourceForm^SourceField^MappingField,CurrentValue,Operator}} —
-The entire formula must be written as a single JSON string (no + signs or concatenation between strings).
-The operator between expressions can be +, -, *, or / depending on the mathematical logic required.
+**{{SourceForm^SourceField^MappingField,CurrentValue,Operator}}** —
+The entire formula must be written as a **single JSON string** (no + signs or concatenation between strings).
+The operator between expressions can be **+, -, *, or /** depending on the mathematical logic required.
 Use this structure exactly:
-Example:
-{{GoodsReceived^QuantityReceived^GoodsReceived.GRNLineID,Invoice.ProductID,=}} * {{PurchaseOrder^UnitPrice^PurchaseOrder.POLineID,Invoice.ProductID,=}}
+(e.g., {{GoodsReceived^QuantityReceived^GoodsReceived.GRNLineID,Invoice.ProductID,=}} * {{PurchaseOrder^UnitPrice^PurchaseOrder.POLineID,Invoice.ProductID,=}})
 
 JSON Structure Example (Use this exact schema for every field and match the structure of fields like 'sequence', 'options', and 'calculation'):
 {JSON_STRUCTURE_EXAMPLE}
 """
+        # The user's requirement is passed in the user_content part
         user_content = f"Requirement: {prompt}"
         
     else:
@@ -276,6 +278,7 @@ JSON Structure Example (Do not modify the JSON structure itself):
 
     # 2. Call the Google GenAI API
     try:
+        # The prompt is constructed by combining the system instruction and user content
         full_prompt = f"System Instruction:\n{system_instruction}\n\nUser Request:\n{user_content}"
         
         completion = client.models.generate_content(
@@ -286,13 +289,17 @@ JSON Structure Example (Do not modify the JSON structure itself):
 
         generated_text = completion.text
         
+        # 3. Process the model's response (which should be pure JSON)
         try:
+            # Validate and format the JSON
             parsed_json = json.loads(generated_text)
             formatted_json = json.dumps(parsed_json, indent=4)
             
+            # Update state
             st.session_state['generated_json'] = formatted_json
             st.session_state['is_initial'] = False
             
+            # Generate a conversational response for the chat history
             if is_initial:
                 return "Initial JSON structure generated successfully. You can now tell me what to modify (e.g., 'Add a field for Total Tax' or 'Change InvoiceID to start with 100')."
             else:
@@ -305,42 +312,54 @@ JSON Structure Example (Do not modify the JSON structure itself):
         return f"❌ API Error: {e}"
 
 
-# --- 5. STREAMLIT UI LAYOUT ---
+# --- 5. STREAMLIT UI LAYOUT (Kept identical) ---
 st.set_page_config(page_title="JSON Editor Chat", page_icon="https://www.needlu.com/webImage/needluLogoV.png", layout="wide")
 st.title("Needlu Form Generator")
 st.markdown("Enter your requirement below.")
 
+# Create two columns for the split view
 col1, col2 = st.columns([1, 1])
 
 with col1:
     st.subheader("Chat Interface")
     
+    # Display the chat history
     for message in st.session_state['messages']:
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
 
+    # Handle new user input
     if prompt := st.chat_input("Enter your initial form requirement or a modification"):
+        # Add user message to state
         st.session_state['messages'].append({"role": "user", "content": prompt})
         
+        # Get response from the model
         if client:
+            # Use GEMINI_MODEL name in the spinner
             with st.spinner(f"Processing"):
                 assistant_response_text = generate_or_edit_json(prompt)
         else:
+            # Updated error message for Google client
             assistant_response_text = "❌ Google GenAI client is not initialized. Check API key configuration."
 
+        # Add assistant response (narrative) to state
         st.session_state['messages'].append({"role": "assistant", "content": assistant_response_text})
         
+        # Display assistant message
         with st.chat_message("assistant"):
             st.markdown(assistant_response_text)
         
+        # Rerun to update the JSON display in col2
         st.rerun()
 
 
 with col2:
     st.subheader("Current Generated JSON")
     
+    # Display the latest generated JSON artifact
     st.code(st.session_state['generated_json'], language="json")
     
+    # Download button for the current artifact
     st.download_button(
         label="Download Current JSON",
         data=st.session_state['generated_json'],
@@ -352,4 +371,10 @@ with col2:
         st.info("Start by entering your form requirement (e.g., 'Create a Purchase Order form with fields for Vendor, Item, Quantity, and Price').")
     else:
         st.success("Refine the JSON using the chat interface on the left.")
+
+
+
+
+
+
 
