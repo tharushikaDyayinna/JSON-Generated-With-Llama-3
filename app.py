@@ -5,7 +5,7 @@ import json
 
 # --- 1. API Key and Client Initialization ---
 # The API key you provided. Note: Real keys should be stored securely.
-GOOGLE_API_KEY = "AIzaSyBlLsEjhgb98CB_pKeDTsTxpgGItvQFzLg"
+GOOGLE_API_KEY = "AIzaSyCFWAJFTWn1sqwElOZmjDsSK4Op4XEYZb0"
 
 # Initialize the Google GenAI client and model name
 client = None
@@ -371,6 +371,7 @@ with col2:
         st.info("Start by entering your form requirement (e.g., 'Create a Purchase Order form with fields for Vendor, Item, Quantity, and Price').")
     else:
         st.success("Refine the JSON using the chat interface on the left.")
+
 
 
 
