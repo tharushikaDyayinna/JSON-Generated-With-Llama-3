@@ -234,10 +234,6 @@ def generate_or_edit_json(prompt):
 **MANDATORY**: The value for the `help_text` key MUST ALWAYS be an empty string ("") for ALL fields.
 **SPECIAL INSTRUCTION FOR OPTIONS**: For any field with data_type: "options", you **MUST** include the "formName" key to specify the source form.
 
-**SPECIAL INSTRUCTION FOR FETCH_FUNCTION**: If the user asks to fetch or look up data from another form into a static field, use the `fetch_function` key with the following syntax:
-`fm^fd^rf1,tf1,lo1 and rf2,tf2,lo2 ^ Entity Level Type`
-Where fm=form name, fd=field name of value needed, rfx=reference field in current form, tfx=target field in fm, lox=logic (EQUAL, GREATER, LESS, etc.).
-
 **IMPORTANT INSTRUCTION FOR CALCULATION**: Calculations must use one of the following two formats.
 Use the complex format when a value needs to be fetched from another form within the calculation.
 
@@ -372,6 +368,7 @@ with col2:
         st.info("Start by entering your form requirement (e.g., 'Create a Purchase Order form with fields for Vendor, Item, Quantity, and Price').")
     else:
         st.success("Refine the JSON using the chat interface on the left.")
+
 
 
 
