@@ -44,7 +44,7 @@ JSON_STRUCTURE_EXAMPLE = """{
         {
             "data_name": "Invoice ID",
             "data_type": "sequence",
-            "sorting_value": "1",
+            "sorting_value": "10",
             "identifier": 0,
             "options_from": "",
             "fetch_function": "",
@@ -72,7 +72,7 @@ JSON_STRUCTURE_EXAMPLE = """{
         {
             "data_name": "Customer Name",
             "data_type": "options",
-            "sorting_value": "2",
+            "sorting_value": "20",
             "identifier": 0,
             "options_from": "CustomerEntity",
             "fetch_function": "",
@@ -96,7 +96,7 @@ JSON_STRUCTURE_EXAMPLE = """{
         {
             "data_name": "Invoice Date",
             "data_type": "date",
-            "sorting_value": "3",
+            "sorting_value": "30",
             "identifier": 0,
             "options_from": "",
             "fetch_function": "",
@@ -119,7 +119,7 @@ JSON_STRUCTURE_EXAMPLE = """{
         {
             "data_name": "Product ID",
             "data_type": "text",
-            "sorting_value": "4",
+            "sorting_value": "40",
             "identifier": 0,
             "options_from": "ProductsEntity",
             "fetch_function": "",
@@ -143,7 +143,7 @@ JSON_STRUCTURE_EXAMPLE = """{
         {
             "data_name": "Quantity",
             "data_type": "number",
-            "sorting_value": "5",
+            "sorting_value": "50",
             "identifier": 0,
             "options_from": "",
             "fetch_function": "",
@@ -166,7 +166,7 @@ JSON_STRUCTURE_EXAMPLE = """{
         {
             "data_name": "Unit Price",
             "data_type": "number",
-            "sorting_value": "6",
+            "sorting_value": "60",
             "identifier": 0,
             "options_from": "",
             "fetch_function": "",
@@ -189,7 +189,7 @@ JSON_STRUCTURE_EXAMPLE = """{
         {
             "data_name": "Line Total",
             "data_type": "calculation",
-            "sorting_value": "7",
+            "sorting_value": "70",
             "identifier": 0,
             "options_from": "",
             "fetch_function": "",
@@ -368,6 +368,7 @@ with col2:
         st.info("Start by entering your form requirement (e.g., 'Create a Purchase Order form with fields for Vendor, Item, Quantity, and Price').")
     else:
         st.success("Refine the JSON using the chat interface on the left.")
+
 
 
 
