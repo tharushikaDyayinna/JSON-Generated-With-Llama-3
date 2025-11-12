@@ -10,7 +10,7 @@ GOOGLE_API_KEY = "AIzaSyCFWAJFTWn1sqwElOZmjDsSK4Op4XEYZb0"
 # Initialize the Google GenAI client and model name
 client = None
 # Using a powerful model suitable for complex JSON generation
-GEMINI_MODEL = 'gemini-2.5-pro' 
+GEMINI_MODEL = 'gemini-2.5-flash' 
 
 if GOOGLE_API_KEY:
     try:
@@ -371,6 +371,7 @@ with col2:
         st.info("Start by entering your form requirement (e.g., 'Create a Purchase Order form with fields for Vendor, Item, Quantity, and Price').")
     else:
         st.success("Refine the JSON using the chat interface on the left.")
+
 
 
 
