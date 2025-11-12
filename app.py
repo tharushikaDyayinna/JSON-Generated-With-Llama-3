@@ -42,7 +42,7 @@ JSON_STRUCTURE_EXAMPLE = """{
     },
     "fieldsData": [
         {
-            "data_name": "InvoiceID",
+            "data_name": "Invoice ID",
             "data_type": "sequence",
             "sorting_value": "1",
             "identifier": 0,
@@ -70,7 +70,7 @@ JSON_STRUCTURE_EXAMPLE = """{
             "start_with": "1"
         },
         {
-            "data_name": "CustomerName",
+            "data_name": "Customer Name",
             "data_type": "options",
             "sorting_value": "2",
             "identifier": 0,
@@ -94,7 +94,7 @@ JSON_STRUCTURE_EXAMPLE = """{
             "formName": "Customers"
         },
         {
-            "data_name": "InvoiceDate",
+            "data_name": "Invoice Date",
             "data_type": "date",
             "sorting_value": "3",
             "identifier": 0,
@@ -117,7 +117,7 @@ JSON_STRUCTURE_EXAMPLE = """{
             "decimals": ""
         },
         {
-            "data_name": "ProductID",
+            "data_name": "Product ID",
             "data_type": "text",
             "sorting_value": "4",
             "identifier": 0,
@@ -164,7 +164,7 @@ JSON_STRUCTURE_EXAMPLE = """{
             "decimals": "0"
         },
         {
-            "data_name": "UnitPrice",
+            "data_name": "Unit Price",
             "data_type": "number",
             "sorting_value": "6",
             "identifier": 0,
@@ -187,7 +187,7 @@ JSON_STRUCTURE_EXAMPLE = """{
             "decimals": "2"
         },
         {
-            "data_name": "LineTotal",
+            "data_name": "Line Total",
             "data_type": "calculation",
             "sorting_value": "7",
             "identifier": 0,
@@ -371,6 +371,7 @@ with col2:
         st.info("Start by entering your form requirement (e.g., 'Create a Purchase Order form with fields for Vendor, Item, Quantity, and Price').")
     else:
         st.success("Refine the JSON using the chat interface on the left.")
+
 
 
 
