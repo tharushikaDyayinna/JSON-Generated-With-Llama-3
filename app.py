@@ -240,7 +240,7 @@ Use the complex format when a value needs to be fetched from another form within
 1. Simple internal reference: **{{FormName.FieldName}}**
 (e.g., {{Invoice.Quantity}} * {{Invoice.Price}})
 
-2. Complex cross-form reference (MANDATORY for data from another form):
+2. Complex cross-form reference (to fetch values and calculate):
 **{{SourceForm^SourceField^MappingField,CurrentValue,Operator}}** —
 The entire formula must be written as a **single JSON string** (no + signs or concatenation between strings).
 The operator between expressions can be **+, -, *, or /** depending on the mathematical logic required.
@@ -368,6 +368,7 @@ with col2:
         st.info("Start by entering your form requirement (e.g., 'Create a Purchase Order form with fields for Vendor, Item, Quantity, and Price').")
     else:
         st.success("Refine the JSON using the chat interface on the left.")
+
 
 
 
