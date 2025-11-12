@@ -248,9 +248,6 @@ Use the complex format when a value needs to be fetched from another form within
 **{{SourceForm^SourceField^MappingField,CurrentValue,Operator}}** —
 The entire formula must be written as a **single JSON string** (no + signs or concatenation between strings).
 The operator between expressions can be **+, -, *, or /** depending on the mathematical logic required.
-use the `calculation` key with the following syntax:
-`fm^fd^rf1,tf1,lo1 and rf2,tf2,lo2 ^ Entity Level Type`
-Where fm=form name, fd=field name of value needed, rfx=reference field in current form, tfx=target field in fm, lox=logic (=,<,>).
 Use this structure exactly:
 (e.g., {{GoodsReceived^QuantityReceived^GoodsReceived.GRNLineID,Invoice.ProductID,=}} * {{PurchaseOrder^UnitPrice^PurchaseOrder.POLineID,Invoice.ProductID,=}})
 
@@ -375,6 +372,7 @@ with col2:
         st.info("Start by entering your form requirement (e.g., 'Create a Purchase Order form with fields for Vendor, Item, Quantity, and Price').")
     else:
         st.success("Refine the JSON using the chat interface on the left.")
+
 
 
 
