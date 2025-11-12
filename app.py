@@ -91,7 +91,7 @@ JSON_STRUCTURE_EXAMPLE = """{
             "sum_func": "",
             "countIf": "",
             "decimals": "",
-            "formName": "Customers"
+            "formName": "Customers Details"
         },
         {
             "data_name": "Invoice Date",
@@ -375,6 +375,7 @@ with col2:
         st.info("Start by entering your form requirement (e.g., 'Create a Purchase Order form with fields for Vendor, Item, Quantity, and Price').")
     else:
         st.success("Refine the JSON using the chat interface on the left.")
+
 
 
 
