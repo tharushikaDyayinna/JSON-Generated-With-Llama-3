@@ -80,7 +80,7 @@ JSON_STRUCTURE_EXAMPLE = """{
             "data_name": "Line Total",
             "data_type": "calculation",
             "sorting_value": "60",
-            "calculation": "{GoodsReceived^Quantity^GoodsReceived.GRNLineID,Invoice.ProductID,=} * {Invoice.Unit Price}",
+            "calculation": "{GoodsReceived^Quantity^GoodsReceived.GRNLineID,Invoice.Product ID,=} * {Invoice.Unit Price}",
             "decimals": "2"
         }
     ]
@@ -242,6 +242,7 @@ with col2:
         st.info("Start by entering your form requirement (e.g., 'Create a Purchase Order form with fields for Vendor, Item, Quantity, and Price').")
     else:
         st.success("Refine the JSON using the chat interface on the left.")
+
 
 
 
