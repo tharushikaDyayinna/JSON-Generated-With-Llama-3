@@ -70,12 +70,6 @@ JSON_STRUCTURE_EXAMPLE = """{
             
         },
         {
-            "data_name": "Quantity",
-            "data_type": "number",
-            "sorting_value": "40",
-            "decimals": "2"
-        },
-        {
             "data_name": "Unit Price",
             "data_type": "number",
             "sorting_value": "50",
@@ -86,7 +80,7 @@ JSON_STRUCTURE_EXAMPLE = """{
             "data_name": "Line Total",
             "data_type": "calculation",
             "sorting_value": "60",
-            "calculation": "{GoodsReceived^QuantityReceived^GoodsReceived.GRNLineID,Invoice.ProductID,=} * {PurchaseOrder^UnitPrice^PurchaseOrder.POLineID,Invoice.ProductID,=}",
+            "calculation": "{GoodsReceived^Quantity^GoodsReceived.GRNLineID,Invoice.ProductID,=} * {Invoice.Unit Price}",
             "decimals": "2"
         }
     ]
@@ -125,7 +119,7 @@ Use the complex format when a value needs to be fetched from another form within
 The entire formula must be written as a **single JSON string** (no + signs or concatenation between strings).
 The operator between expressions can be **+, -, *, or /** depending on the mathematical logic required.
 Use this structure exactly:
-(e.g., {{GoodsReceived^QuantityReceived^GoodsReceived.GRNLineID,Invoice.ProductID,=}} * {{PurchaseOrder^UnitPrice^PurchaseOrder.POLineID,Invoice.ProductID,=}})
+(e.g., {{GoodsReceived^Quantity^GoodsReceived.GRNLineID,Invoice.ProductID,=} * {Invoice.Unit Price}})
 
 JSON Structure Example (Use this exact schema for every field and match the structure of fields like 'sequence', 'options', and 'calculation'):
 {JSON_STRUCTURE_EXAMPLE}
@@ -248,6 +242,7 @@ with col2:
         st.info("Start by entering your form requirement (e.g., 'Create a Purchase Order form with fields for Vendor, Item, Quantity, and Price').")
     else:
         st.success("Refine the JSON using the chat interface on the left.")
+
 
 
 
