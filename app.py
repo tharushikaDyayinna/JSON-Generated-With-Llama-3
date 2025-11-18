@@ -44,28 +44,11 @@ JSON_STRUCTURE_EXAMPLE = """{
         {
             "data_name": "Invoice ID",
             "data_type": "sequence",
-            "sorting_value": "10",
-            "identifier": 0,
-            "options_from": "",
-            "fetch_function": "",
-            "calculation": "",
-            "defaultVal": "",
-            "features": "",
-            "inherit": 0,
-            "attributes": "readonly",
-            "entityMethod": "",
-            "entityOrLevel": "",
-            "mapping": [],
+            "sorting_value": 1,
             "keyMember": 0,
-            "sumClass": "",
-            "data_info": "",
-            "help_text": "",
-            "sum_func": "",
-            "countIf": "",
-            "decimals": "0",
-            "prefix": "INV",
+            "prefix": "POL",
             "sufix": "",
-            "digits": "5",
+            "digits": "1",
             "replacer": "0",
             "start_with": "1"
         },
@@ -368,6 +351,7 @@ with col2:
         st.info("Start by entering your form requirement (e.g., 'Create a Purchase Order form with fields for Vendor, Item, Quantity, and Price').")
     else:
         st.success("Refine the JSON using the chat interface on the left.")
+
 
 
 
