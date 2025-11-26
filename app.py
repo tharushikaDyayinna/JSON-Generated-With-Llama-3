@@ -15,7 +15,7 @@ except KeyError:
 client = genai.Client(api_key=GOOGLE_API_KEY)
 
 # Using a powerful model suitable for complex JSON generation
-GEMINI_MODEL = 'gemini-2.5-flash' 
+GEMINI_MODEL = 'gemini-2.5-flash'
 
 if GOOGLE_API_KEY:
     try:
@@ -28,8 +28,8 @@ if GOOGLE_API_KEY:
 if 'messages' not in st.session_state:
     st.session_state['messages'] = []
 if 'generated_json' not in st.session_state:
-    # Use a dummy initial structure to check if generation has occurred
-    st.session_state['generated_json'] = '{"formData": {"newformName": "Draft Form"}, "fieldsData": []}'
+    # Updated dummy initial structure to reflect the new top-level keys
+    st.session_state['generated_json'] = '{"formData": {"newformName": "Draft Form"}, "fieldsData": [], "operations": []}'
 if 'is_initial' not in st.session_state:
     st.session_state['is_initial'] = True
 
@@ -38,7 +38,7 @@ JSON_STRUCTURE_EXAMPLE = """{
     "formData": {
         "entityType": "T Department",
         "formCategory": "T Form",
-        "formName": "Invoice", 
+        "formName": "Invoice",
         "frequency": "any",
         "editable": 1,
         "deletable": 1,
@@ -47,6 +47,7 @@ JSON_STRUCTURE_EXAMPLE = """{
     },
     "fieldsData": [
         {
+        
             "data_name": "Invoice ID",
             "data_type": "sequence",
             "sorting_value": 1,
@@ -56,39 +57,180 @@ JSON_STRUCTURE_EXAMPLE = """{
             "digits": "1",
             "replacer": "0",
             "start_with": "1"
+        
         },
-        {
+            {
             "data_name": "Customer Name",
             "data_type": "options",
             "sorting_value": 4,
             "formName": "Customer Details"
         },
+
         {
+
             "data_name": "Invoice Date",
             "data_type": "date",
             "sorting_value": "30"
+
         },
+        
         {
+
             "data_name": "Product Name",
             "data_type": "text",
             "sorting_value": "30"
-            
+ 
+
         },
+
         {
-            "data_name": "Unit Price",
+
+             "data_name": "Unit Price",
             "data_type": "number",
             "sorting_value": "50",
             "decimals": "2"
-            
+
         },
+
         {
             "data_name": "Line Total",
             "data_type": "calculation",
             "sorting_value": "60",
             "calculation": "{GoodsReceived^Quantity^GoodsReceived.GRNLineID,Invoice.Product ID,=} * {Invoice.Unit Price}",
             "decimals": "2"
+
         }
-    ]
+
+
+    ],
+    "operations": [
+        {
+            "id": "",
+            "form": "",
+            "object_field": null,
+            "update_field": null,
+            "fixed_update": null,
+            "update_type": "d_newRecord",
+            "update_val": null,
+            "new_form": "851",
+            "new_form_entity": "",
+            "new_form_entity_level": "Needlu",
+            "operation_group": "0",
+            "display_name": "",
+            "dest_multiplier": "0",
+            "thisForm": "0",
+            "sorting_fields": "",
+            "map_until_field": null,
+            "exe_condition": null,
+            "skip_cal": null,
+            "mapping": [
+                ["Invoice.Invoice ID", "Invoice history.Reference No", "=", ""],
+                ["Invoice.Customer Name", "Invoice history.Customer Name", "=", ""]
+            ],
+            "operationGroups": [
+                {
+                    "name": "Invoice Update",
+                    "list": "1253",
+                    "group_type": "0",
+                    "mc_field": "0",
+                    "menue_condition": "",
+                    "mc_value": "",
+                    "exclude_menu": "1",
+                    "on_submit": "1",
+                    "auth_category": "",
+                    "menu_sort": "0"
+                } ,
+                {
+                    "name": "Auto Submitting",
+                    "list": "1254",
+                    "group_type": "0",
+                    "mc_field": "0",
+                    "menue_condition": "",
+                    "mc_value": "",
+                    "exclude_menu": "1",
+                    "on_submit": "1",
+                    "auth_category": "",
+                    "menu_sort": "0"
+                }
+               ]
+             },
+
+{
+            "id": "",
+            "form": "",
+            "object_field": null,
+            "update_field": null,
+            "fixed_update": null,
+            "update_type": "d_newRecord",
+            "update_val": null,
+            "new_form": "851",
+            "new_form_entity": "",
+            "new_form_entity_level": "Needlu",
+            "operation_group": "0",
+            "display_name": "",
+            "dest_multiplier": "0",
+            "thisForm": "0",
+            "sorting_fields": "",
+            "map_until_field": null,
+            "exe_condition": null,
+            "skip_cal": null,
+            "mapping": [
+                 [
+                     "Invoice.Invoice ID",
+                     "Invoice history.Reference No",
+                     "=",
+                     ""
+                 ],
+                 [
+                     "Invoice.Customer Name",
+                     "Invoice history.Customer Name",
+                     "=",
+                     ""
+                 ],
+                 [
+                     "Invoice.Product ID",
+                     "Invoice history.Item ID",
+                     "=",
+                     ""
+                 ],
+                 [
+                     "Invoice.Invoice Date",
+                     "Invoice history.Date",
+                     "=",
+                     ""
+                 ]
+             ],
+            "operationGroups": [
+                {
+                    "name": "Need to Paid ",
+                    "list": "1255",
+                    "group_type": "0",
+                    "mc_field": "0",
+                    "menue_condition": "",
+                    "mc_value": "",
+                    "exclude_menu": "1",
+                    "on_submit": "1",
+                    "auth_category": "",
+                    "menu_sort": "0"
+                },
+                {
+                    "name": "Release",
+                    "list": "1256",
+                    "group_type": "0",
+                    "mc_field": "0",
+                    "menue_condition": "",
+                    "mc_value": "",
+                    "exclude_menu": "2",
+                    "on_submit": "1",
+                    "auth_category": "",
+                    "menu_sort": "0"
+                }
+            ]
+        }
+    ]
+            
+        
+    
 }"""
 
 
@@ -98,55 +240,61 @@ def generate_or_edit_json(prompt):
 
     # 1. Determine the mode and construct the system prompt
     is_initial = st.session_state['is_initial']
-    
+
+    # --- NEW INSTRUCTION DETAILS FOR OPERATIONS ---
+    OPERATION_RULES = """
+**NEW KEY: "operations"**: This is a top-level array, similar to "fieldsData". Each object within this array MUST adhere to the detailed structure provided in the JSON Structure Example, including keys like 'id', 'update_type', 'mapping', and 'operationGroups'.
+
+**CRITICAL INSTRUCTION FOR operationGroups**: Each object in the 'operationGroups' array MUST contain the 'exclude_menu' key with one of these specific string values:
+- "0": **Menu Operation** (Default/Standard Menu Item)
+- "1": **Exclude from menu** (Hidden/Backend Operation)
+- "2": **Button** (Standard Action Button)
+- "3": **Link Button** (Button that acts as a hyperlink/redirect)
+- "4": **Function Button** (Button that executes a dedicated function)
+"""
+    # --- END NEW INSTRUCTION DETAILS ---
+
     if is_initial:
         # Initial Generation Mode
-        # --- CORRECTED PROMPT INSTRUCTION ---
-        # The user's detailed instructions are integrated here as the system prompt.
         system_instruction = f"""Generate a complete JSON object for the following system creation requirement.
-        
+
 **MANDATORY**: Your response MUST be ONLY the complete, valid JSON object. Do not include any narrative or markdown outside of the JSON block.
 
-**CRITICAL INSTRUCTION**: Every object generated within the "fieldsData" array MUST strictly adhere to the full structure provided in the JSON Structure Example, including all keys.
+**CRITICAL INSTRUCTION**: Every object generated within the "fieldsData" array AND the "operations" array MUST strictly adhere to the full structure provided in the JSON Structure Example, including all keys.
 **MANDATORY DATA TYPES**: The 'data_type' key MUST ONLY use one of these values: **sequence, options, date, text, number, calculation**. Do not use any other data types.
 **MANDATORY**: The value for the `sorting_value` key MUST be assigned in intervals of 10 (e.g., 10, 20, 30, 40, ...) in ascending order for each new field.
 **MANDATORY**: The value for the `help_text` key MUST ALWAYS be an empty string ("") for ALL fields.
 **SPECIAL INSTRUCTION FOR OPTIONS**: For any field with data_type: "options", you **MUST** include the "formName" key to specify the source form.
 
-**IMPORTANT INSTRUCTION FOR CALCULATION**: Calculations must use one of the following two formats.
-Use the complex format when a value needs to be fetched from another form within the calculation.
+**IMPORTANT INSTRUCTION FOR CALCULATION**: Calculations must use one of the following two formats: Simple internal reference or Complex cross-form reference.
+The entire formula must be written as a **single JSON string**.
 
-1. Simple internal reference: **{{FormName.FieldName}}**
-(e.g., {{Invoice.Quantity}} * {{Invoice.Price}})
+{OPERATION_RULES}
 
-2. Complex cross-form reference (to fetch values and calculate):
-**{{SourceForm^SourceField^MappingField,CurrentValue,Operator}}** —
-The entire formula must be written as a **single JSON string** (no + signs or concatenation between strings).
-The operator between expressions can be **+, -, *, or /** depending on the mathematical logic required.
-Use this structure exactly:
-(e.g., {{GoodsReceived^Quantity^GoodsReceived.GRNLineID,Invoice.Product ID,=}} * {{Invoice.Unit Price}})
-
-JSON Structure Example (Use this exact schema for every field and match the structure of fields like 'sequence', 'options', and 'calculation'):
+JSON Structure Example (Use this exact schema for every field and operation):
 {JSON_STRUCTURE_EXAMPLE}
 """
         # The user's requirement is passed in the user_content part
         user_content = f"Requirement: {prompt}"
-        
+
     else:
         # Iterative Editing Mode
         current_json = st.session_state['generated_json']
         system_instruction = f"""You are a JSON form editing assistant. You MUST modify the provided CURRENT JSON based on the user's request.
+
 **CURRENT JSON**: {current_json}
 
 **MANDATORY**: Your response MUST be ONLY the complete, modified JSON object. Do not include any narrative or markdown outside of the JSON block.
-**CRITICAL**: You MUST preserve all fields not explicitly requested to be changed.
+**CRITICAL**: You MUST preserve all fields and operations not explicitly requested to be changed.
 **SCHEMA REMINDER**: Adhere to the structure in the JSON Structure Example. Use a sorting_value that is appropriate relative to existing fields.
+
+{OPERATION_RULES}
 
 JSON Structure Example (Do not modify the JSON structure itself):
 {JSON_STRUCTURE_EXAMPLE}
 """
         user_content = f"Please apply this change to the current JSON: {prompt}"
-    
+
     # Configure the request to force JSON output
     config = types.GenerateContentConfig(
         response_mime_type="application/json"
@@ -156,7 +304,7 @@ JSON Structure Example (Do not modify the JSON structure itself):
     try:
         # The prompt is constructed by combining the system instruction and user content
         full_prompt = f"System Instruction:\n{system_instruction}\n\nUser Request:\n{user_content}"
-        
+
         completion = client.models.generate_content(
             model=GEMINI_MODEL,
             contents=full_prompt,
@@ -164,20 +312,20 @@ JSON Structure Example (Do not modify the JSON structure itself):
         )
 
         generated_text = completion.text
-        
+
         # 3. Process the model's response (which should be pure JSON)
         try:
             # Validate and format the JSON
             parsed_json = json.loads(generated_text)
             formatted_json = json.dumps(parsed_json, indent=4)
-            
+
             # Update state
             st.session_state['generated_json'] = formatted_json
             st.session_state['is_initial'] = False
-            
+
             # Generate a conversational response for the chat history
             if is_initial:
-                return "Initial JSON structure generated successfully. You can now tell me what to modify (e.g., 'Add a field for Total Tax' or 'Change InvoiceID to start with 100')."
+                return "Initial JSON structure generated successfully, including **operations** and **operationGroups** schema. You can now tell me what to modify (e.g., 'Add a field for Total Tax' or 'Add an operation to save the form')."
             else:
                 return "JSON updated successfully based on your feedback."
 
@@ -198,7 +346,7 @@ col1, col2 = st.columns([1, 1])
 
 with col1:
     st.subheader("Chat Interface")
-    
+
     # Display the chat history
     for message in st.session_state['messages']:
         with st.chat_message(message["role"]):
@@ -208,7 +356,7 @@ with col1:
     if prompt := st.chat_input("Enter your initial form requirement or a modification"):
         # Add user message to state
         st.session_state['messages'].append({"role": "user", "content": prompt})
-        
+
         # Get response from the model
         if client:
             # Use GEMINI_MODEL name in the spinner
@@ -220,21 +368,21 @@ with col1:
 
         # Add assistant response (narrative) to state
         st.session_state['messages'].append({"role": "assistant", "content": assistant_response_text})
-        
+
         # Display assistant message
         with st.chat_message("assistant"):
             st.markdown(assistant_response_text)
-        
+
         # Rerun to update the JSON display in col2
         st.rerun()
 
 
 with col2:
     st.subheader("Current Generated JSON")
-    
+
     # Display the latest generated JSON artifact
     st.code(st.session_state['generated_json'], language="json")
-    
+
     # Download button for the current artifact
     st.download_button(
         label="Download Current JSON",
@@ -247,29 +395,4 @@ with col2:
         st.info("Start by entering your form requirement (e.g., 'Create a Purchase Order form with fields for Vendor, Item, Quantity, and Price').")
     else:
         st.success("Refine the JSON using the chat interface on the left.")
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    
