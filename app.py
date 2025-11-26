@@ -1,17 +1,19 @@
-import os
-from dotenv import load_dotenv
 import streamlit as st
 from google import genai
 from google.genai import types
 import json
 
-# Load environment variables
-load_dotenv()
+# The name used here must match the key name you save in Streamlit Cloud
+try:
+    # Access the API key from Streamlit's secrets storage
+    GOOGLE_API_KEY = st.secrets["GOOGLE_API_KEY"]
+except KeyError:
+    st.error("API Key not found! Please set the 'GOOGLE_API_KEY' secret in the Streamlit Cloud settings.")
+    st.stop() # Stop the app if the key is missing
 
-GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+# Initialize the client with the secret key
+client = genai.Client(api_key=GOOGLE_API_KEY)
 
-# Initialize the Google GenAI client and model name
-client = None
 # Using a powerful model suitable for complex JSON generation
 GEMINI_MODEL = 'gemini-2.5-flash' 
 
@@ -245,6 +247,7 @@ with col2:
         st.info("Start by entering your form requirement (e.g., 'Create a Purchase Order form with fields for Vendor, Item, Quantity, and Price').")
     else:
         st.success("Refine the JSON using the chat interface on the left.")
+
 
 
 
