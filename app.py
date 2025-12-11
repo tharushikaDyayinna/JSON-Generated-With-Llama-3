@@ -3,6 +3,7 @@ from google import genai
 from google.genai import types
 import json
 
+# --- 1. SETUP AND CLIENT INITIALIZATION ---
 # The name used here must match the key name you save in Streamlit Cloud
 try:
     # Access the API key from Streamlit's secrets storage
@@ -12,28 +13,26 @@ except KeyError:
     st.stop() # Stop the app if the key is missing
 
 # Initialize the client with the secret key
-client = genai.Client(api_key=GOOGLE_API_KEY)
+try:
+    client = genai.Client(api_key=GOOGLE_API_KEY)
+except Exception as e:
+    st.error(f"Failed to initialize Google GenAI client: {e}")
 
 # Using a powerful model suitable for complex JSON generation
 GEMINI_MODEL = 'gemini-2.5-flash'
 
-if GOOGLE_API_KEY:
-    try:
-        # Initialize the client with the provided API key
-        client = genai.Client(api_key=GOOGLE_API_KEY)
-    except Exception as e:
-        st.error(f"Failed to initialize Google GenAI client: {e}")
 
-# --- 2. Session State Initialization ---
+# --- 2. SESSION STATE INITIALIZATION ---
 if 'messages' not in st.session_state:
     st.session_state['messages'] = []
 if 'generated_json' not in st.session_state:
-    # Updated dummy initial structure to reflect the new top-level keys
     st.session_state['generated_json'] = '{"formData": {"newformName": "Draft Form"}, "fieldsData": [], "operations": []}'
 if 'is_initial' not in st.session_state:
     st.session_state['is_initial'] = True
 
+
 # --- 3. JSON SCHEMA DEFINITION (Used for prompting) ---
+# Updated to include an example of "options_search" in fieldsData
 JSON_STRUCTURE_EXAMPLE = """{
     "formData": {
         "entityType": "T Department",
@@ -47,7 +46,6 @@ JSON_STRUCTURE_EXAMPLE = """{
     },
     "fieldsData": [
         {
-        
             "data_name": "Invoice ID",
             "data_type": "sequence",
             "sorting_value": 1,
@@ -57,51 +55,42 @@ JSON_STRUCTURE_EXAMPLE = """{
             "digits": "1",
             "replacer": "0",
             "start_with": "1"
-        
         },
-            {
+        {
             "data_name": "Customer Name",
             "data_type": "options",
             "sorting_value": 4,
             "formName": "Customer Details"
         },
-
         {
-
             "data_name": "Invoice Date",
             "data_type": "date",
             "sorting_value": "30"
-
         },
-        
         {
-
             "data_name": "Product Name",
             "data_type": "text",
-            "sorting_value": "30"
- 
-
+            "sorting_value": "40"
         },
-
         {
-
              "data_name": "Unit Price",
             "data_type": "number",
             "sorting_value": "50",
             "decimals": "2"
-
         },
-
         {
             "data_name": "Line Total",
             "data_type": "calculation",
             "sorting_value": "60",
             "calculation": "{GoodsReceived^Quantity^GoodsReceived.GRNLineID,Invoice.Product ID,=} * {Invoice.Unit Price}",
             "decimals": "2"
-
+        },
+        {
+            "data_name": "Vendor Search",
+            "data_type": "options_search",
+            "sorting_value": "70",
+            "search_syntax": "280$1531,1532$1544$2=1523,3=1524$1530=Active"
         }
-
-
     ],
     "operations": [
         {
@@ -139,109 +128,33 @@ JSON_STRUCTURE_EXAMPLE = """{
                     "on_submit": "1",
                     "auth_category": "",
                     "menu_sort": "0"
-                } ,
+                },
                 {
-                    "name": "Auto Submitting",
-                    "list": "1254",
-                    "group_type": "0",
-                    "mc_field": "0",
-                    "menue_condition": "",
-                    "mc_value": "",
-                    "exclude_menu": "1",
-                    "on_submit": "1",
-                    "auth_category": "",
-                    "menu_sort": "0"
-                }
-               ]
-             },
-
-{
-            "id": "",
-            "form": "",
-            "object_field": null,
-            "update_field": null,
-            "fixed_update": null,
-            "update_type": "d_newRecord",
-            "update_val": null,
-            "new_form": "851",
-            "new_form_entity": "",
-            "new_form_entity_level": "Needlu",
-            "operation_group": "0",
-            "display_name": "",
-            "dest_multiplier": "0",
-            "thisForm": "0",
-            "sorting_fields": "",
-            "map_until_field": null,
-            "exe_condition": null,
-            "skip_cal": null,
-            "mapping": [
-                 [
-                     "Invoice.Invoice ID",
-                     "Invoice history.Reference No",
-                     "=",
-                     ""
-                 ],
-                 [
-                     "Invoice.Customer Name",
-                     "Invoice history.Customer Name",
-                     "=",
-                     ""
-                 ],
-                 [
-                     "Invoice.Product ID",
-                     "Invoice history.Item ID",
-                     "=",
-                     ""
-                 ],
-                 [
-                     "Invoice.Invoice Date",
-                     "Invoice history.Date",
-                     "=",
-                     ""
-                 ]
-             ],
-            "operationGroups": [
-                {
-                    "name": "Need to Paid ",
-                    "list": "1255",
-                    "group_type": "0",
-                    "mc_field": "0",
-                    "menue_condition": "",
-                    "mc_value": "",
-                    "exclude_menu": "1",
-                    "on_submit": "1",
-                    "auth_category": "",
-                    "menu_sort": "0"
-                },
-                {
-                    "name": "Release",
-                    "list": "1256",
-                    "group_type": "0",
-                    "mc_field": "0",
-                    "menue_condition": "",
-                    "mc_value": "",
-                    "exclude_menu": "2",
-                    "on_submit": "1",
-                    "auth_category": "",
-                    "menu_sort": "0"
-                }
-            ]
-        }
-    ]
-            
-        
-    
+                    "name": "Auto Submitting",
+                    "list": "1254",
+                    "group_type": "0",
+                    "mc_field": "0",
+                    "menue_condition": "",
+                    "mc_value": "",
+                    "exclude_menu": "1",
+                    "on_submit": "1",
+                    "auth_category": "",
+                    "menu_sort": "0"
+                }
+            ]
+        }
+    ]
 }"""
 
 
-# --- 4. CORE GENERATION / EDITING FUNCTION (Updated for Gemini) ---
+# --- 4. CORE GENERATION / EDITING FUNCTION ---
 def generate_or_edit_json(prompt):
     """Handles both initial JSON generation and subsequent iterative editing using the Gemini API."""
 
     # 1. Determine the mode and construct the system prompt
     is_initial = st.session_state['is_initial']
 
-    # --- NEW INSTRUCTION DETAILS FOR OPERATIONS ---
+    # --- INSTRUCTION DETAILS FOR OPERATIONS ---
     OPERATION_RULES = """
 **NEW KEY: "operations"**: This is a top-level array, similar to "fieldsData". Each object within this array MUST adhere to the detailed structure provided in the JSON Structure Example, including keys like 'id', 'update_type', 'mapping', and 'operationGroups'.
 
@@ -252,7 +165,15 @@ def generate_or_edit_json(prompt):
 - "3": **Link Button** (Button that acts as a hyperlink/redirect)
 - "4": **Function Button** (Button that executes a dedicated function)
 """
-    # --- END NEW INSTRUCTION DETAILS ---
+    
+    # --- INSTRUCTION DETAILS FOR OPTIONS SEARCH ---
+    OPTIONS_SEARCH_RULES = """
+**SPECIAL INSTRUCTION FOR OPTIONS SEARCH**:
+If the 'data_type' is "options_search", you MUST include a key named "search_syntax".
+The value for "search_syntax" must follow this exact format string: "form_id $ display_fields $ hidden_fields $ value_mapping $ filter_conditions"
+- Example Syntax: "280$1531,1532$1544$2=1523,3=1524$1530=Active"
+- Do not split this string into objects; keep it as a single string delimited by $.
+"""
 
     if is_initial:
         # Initial Generation Mode
@@ -261,8 +182,8 @@ def generate_or_edit_json(prompt):
 **MANDATORY**: Your response MUST be ONLY the complete, valid JSON object. Do not include any narrative or markdown outside of the JSON block.
 
 **CRITICAL INSTRUCTION**: Every object generated within the "fieldsData" array AND the "operations" array MUST strictly adhere to the full structure provided in the JSON Structure Example, including all keys.
-**MANDATORY DATA TYPES**: The 'data_type' key MUST ONLY use one of these values: **sequence, options, date, text, number, calculation**. Do not use any other data types.
-**MANDATORY**: The value for the `sorting_value` key MUST be assigned in intervals of 10 (e.g., 10, 20, 30, 40, ...) in ascending order for each new field.
+**MANDATORY DATA TYPES**: The 'data_type' key MUST ONLY use one of these values: **sequence, options, options_search, date, text, number, calculation**.
+**MANDATORY**: The value for the `sorting_value` key MUST be assigned in intervals of 10 (e.g., 10, 20, 30...) in ascending order.
 **MANDATORY**: The value for the `help_text` key MUST ALWAYS be an empty string ("") for ALL fields.
 **SPECIAL INSTRUCTION FOR OPTIONS**: For any field with data_type: "options", you **MUST** include the "formName" key to specify the source form.
 
@@ -270,6 +191,7 @@ def generate_or_edit_json(prompt):
 The entire formula must be written as a **single JSON string**.
 
 {OPERATION_RULES}
+{OPTIONS_SEARCH_RULES}
 
 JSON Structure Example (Use this exact schema for every field and operation):
 {JSON_STRUCTURE_EXAMPLE}
@@ -289,6 +211,7 @@ JSON Structure Example (Use this exact schema for every field and operation):
 **SCHEMA REMINDER**: Adhere to the structure in the JSON Structure Example. Use a sorting_value that is appropriate relative to existing fields.
 
 {OPERATION_RULES}
+{OPTIONS_SEARCH_RULES}
 
 JSON Structure Example (Do not modify the JSON structure itself):
 {JSON_STRUCTURE_EXAMPLE}
@@ -325,7 +248,7 @@ JSON Structure Example (Do not modify the JSON structure itself):
 
             # Generate a conversational response for the chat history
             if is_initial:
-                return "Initial JSON structure generated successfully, including **operations** and **operationGroups** schema. You can now tell me what to modify (e.g., 'Add a field for Total Tax' or 'Add an operation to save the form')."
+                return "Initial JSON structure generated successfully, including **operations** and **options_search** support. You can now tell me what to modify."
             else:
                 return "JSON updated successfully based on your feedback."
 
@@ -336,7 +259,7 @@ JSON Structure Example (Do not modify the JSON structure itself):
         return f"❌ API Error: {e}"
 
 
-# --- 5. STREAMLIT UI LAYOUT (Kept identical) ---
+# --- 5. STREAMLIT UI LAYOUT ---
 st.set_page_config(page_title="JSON Editor Chat", page_icon="https://www.needlu.com/webImage/needluLogoV.png", layout="wide")
 st.title("Needlu Form Generator")
 st.markdown("Enter your requirement below.")
@@ -360,10 +283,9 @@ with col1:
         # Get response from the model
         if client:
             # Use GEMINI_MODEL name in the spinner
-            with st.spinner(f"Processing"):
+            with st.spinner(f"Processing..."):
                 assistant_response_text = generate_or_edit_json(prompt)
         else:
-            # Updated error message for Google client
             assistant_response_text = "❌ Google GenAI client is not initialized. Check API key configuration."
 
         # Add assistant response (narrative) to state
@@ -395,4 +317,3 @@ with col2:
         st.info("Start by entering your form requirement (e.g., 'Create a Purchase Order form with fields for Vendor, Item, Quantity, and Price').")
     else:
         st.success("Refine the JSON using the chat interface on the left.")
-    
