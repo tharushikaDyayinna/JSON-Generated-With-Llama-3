@@ -165,7 +165,7 @@ def generate_or_edit_json(prompt):
 "Display Field Refs (comma-separated)$Hidden Field Refs (comma-separated)$Mapping (SourceRef=CurrentRef)$Filter Condition (SourceRef=Value)"
 
 **Example of Target Syntax (Using fully qualified references)**:
-"Vendor Details.Vendor Name,Vendor Details.Vendor ID$Vendor Details.Tax ID$Vendor Details.Product=Invoice.Product Name,Vendor Details.Category=Invoice.Product Category$Vendor Details.Status=Active"
+"Vendor Details$Vendor Details.Vendor Name,Vendor Details.Vendor Product$Vendor Details.Vendor Product Category$Vendor Details.Vendor Product=Invoice.Product Name,Vendor Details.Vendor Product Category=Invoice.Product Category$Vendor Details.Status=Active"
 
 **Value Logic**:
     - If the user provided specific details, use them to construct the fully qualified, name-based format.
@@ -239,7 +239,7 @@ JSON Structure Example:
             st.session_state['is_initial'] = False
             
             if is_initial:
-                return "JSON generated. The `options_search` now uses the required **FormName.FieldName** syntax throughout the `search_syntax` string."
+                return "JSON generated. The `search_syntax` is now **mandatory** for `options_search` fields and should include the placeholder."
             else:
                 return "JSON updated successfully."
 
@@ -306,3 +306,4 @@ with col2:
         st.info("Start by entering your form requirement (e.g., 'Create a Purchase Order form with fields for Vendor, Item, Quantity, and Price').")
     else:
         st.success("Refine the JSON using the chat interface on the left.")
+
