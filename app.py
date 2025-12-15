@@ -170,7 +170,7 @@ def generate_or_edit_json(prompt):
 **Value Logic**:
     - If the user provided specific details, use them to construct the fully qualified, name-based format.
     - If the user DID NOT provide specific details, use this **FULLY QUALIFIED** placeholder string exactly:
-      "SOURCE_FORM_NAME.DISPLAY_FIELD1,SOURCE_FORM_NAME.DISPLAY_FIELD2$SOURCE_FORM_NAME.HIDDEN_FIELD$SOURCE_FORM_NAME.LOOKUP_FIELD=CURRENT_FORM_NAME.TARGET_FIELD$SOURCE_FORM_NAME.Status=Active"
+      "SOURCE_FORM_NAME$SOURCE_FORM_NAME.DISPLAY_FIELD1,SOURCE_FORM_NAME.DISPLAY_FIELD2$SOURCE_FORM_NAME.HIDDEN_FIELD$SOURCE_FORM_NAME.LOOKUP_FIELD=CURRENT_FORM_NAME.TARGET_FIELD$SOURCE_FORM_NAME.Status=Active"
 """
 
     # --- Schema Example Update (Ensure the example reflects the new syntax) ---
@@ -306,4 +306,5 @@ with col2:
         st.info("Start by entering your form requirement (e.g., 'Create a Purchase Order form with fields for Vendor, Item, Quantity, and Price').")
     else:
         st.success("Refine the JSON using the chat interface on the left.")
+
 
