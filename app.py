@@ -1,338 +1,251 @@
+# =============================
+# NEEDLU FORM GENERATOR (FINAL)
+# Enforced distinction between options vs options_search
+# =============================
+
 import streamlit as st
 from google import genai
 from google.genai import types
 import json
+import re
 
-# --- 1. SETUP AND CLIENT INITIALIZATION ---
-# The name used here must match the key name you save in Streamlit Cloud
+# --------------------------------------------------
+# 1. SETUP AND CLIENT INITIALIZATION
+# --------------------------------------------------
 try:
-    # Access the API key from Streamlit's secrets storage
     GOOGLE_API_KEY = st.secrets["GOOGLE_API_KEY"]
 except KeyError:
-    st.error("API Key not found! Please set the 'GOOGLE_API_KEY' secret in the Streamlit Cloud settings.")
-    st.stop() # Stop the app if the key is missing
+    st.error("API Key not found! Please set GOOGLE_API_KEY in Streamlit secrets.")
+    st.stop()
 
-# Initialize the client with the secret key
 try:
     client = genai.Client(api_key=GOOGLE_API_KEY)
 except Exception as e:
     st.error(f"Failed to initialize Google GenAI client: {e}")
+    st.stop()
 
-# Using a powerful model suitable for complex JSON generation
-GEMINI_MODEL = 'gemini-2.5-flash'
+GEMINI_MODEL = "gemini-2.5-flash"
 
+# --------------------------------------------------
+# 2. SESSION STATE
+# --------------------------------------------------
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+if "generated_json" not in st.session_state:
+    st.session_state.generated_json = json.dumps(
+        {"formData": {"newformName": "Draft Form"}, "fieldsData": [], "operations": []},
+        indent=4,
+    )
+if "is_initial" not in st.session_state:
+    st.session_state.is_initial = True
 
-# --- 2. SESSION STATE INITIALIZATION ---
-if 'messages' not in st.session_state:
-    st.session_state['messages'] = []
-if 'generated_json' not in st.session_state:
-    st.session_state['generated_json'] = '{"formData": {"newformName": "Draft Form"}, "fieldsData": [], "operations": []}'
-if 'is_initial' not in st.session_state:
-    st.session_state['is_initial'] = True
-
-
-# --- 3. JSON SCHEMA DEFINITION (Used for prompting) ---
-# Updated to show a name-based syntax example for "options_search"
-JSON_STRUCTURE_EXAMPLE = """{
-    "formData": {
-        "entityType": "T Department",
-        "formCategory": "T Form",
-        "formName": "Invoice",
-        "frequency": "any",
-        "editable": 1,
-        "deletable": 1,
-        "newRec": 1,
-        "parentID": 0
+# --------------------------------------------------
+# 3. JSON STRUCTURE EXAMPLE (CANONICAL)
+# --------------------------------------------------
+JSON_STRUCTURE_EXAMPLE = """
+{
+  "formData": {
+    "entityType": "T Department",
+    "formCategory": "T Form",
+    "formName": "Invoice",
+    "frequency": "any",
+    "editable": 1,
+    "deletable": 1,
+    "newRec": 1,
+    "parentID": 0
+  },
+  "fieldsData": [
+    {
+      "data_name": "Invoice ID",
+      "data_type": "sequence",
+      "sorting_value": 10,
+      "help_text": "",
+      "keyMember": 0,
+      "prefix": "POL",
+      "sufix": "",
+      "digits": "1",
+      "replacer": "0",
+      "start_with": "1"
     },
-    "fieldsData": [
-        {
-            "data_name": "Invoice ID",
-            "data_type": "sequence",
-            "sorting_value": 10,
-            "keyMember": 0,
-            "prefix": "POL",
-            "sufix": "",
-            "digits": "1",
-            "replacer": "0",
-            "start_with": "1"
-        },
-         {
-            "data_name": "Customer Name",
-            "data_type": "options_search",
-            "sorting_value": "20",
-            "formName": "Vendor Details",
-            "search_syntax": "Vendor Details$Vendor Details.Vendor Name,Vendor Details.Vendor Product$Vendor Details.Vendor Product Category$Vendor Details.Vendor Product=Invoice.Product Name,Vendor Details.Vendor Product Category=Invoice.Product Category$Vendor Details.Status=Active"
-        },
-        {
-            "data_name": "Invoice Date",
-            "data_type": "date",
-            "sorting_value": "30"
-        },
-        {
-            "data_name": "Product Name",
-            "data_type": "text",
-            "sorting_value": "40"
-        },
-
-        {
-            "data_name": "Product Category",
-            "data_type": "text",
-            "sorting_value": "50"
-        },
-
-        
-        {
-             "data_name": "Unit Price",
-            "data_type": "number",
-            "sorting_value": "60",
-            "decimals": "2"
-        },
-        {
-            "data_name": "Line Total",
-            "data_type": "calculation",
-            "sorting_value": "70",
-            "calculation": "{GoodsReceived^Quantity^GoodsReceived.GRNLineID,Invoice.Product ID,=} * {Invoice.Unit Price}",
-            "decimals": "2"
-        }
-       
-    ],
-    "operations": [
-        {
-            "id": "",
-            "form": "",
-            "object_field": null,
-            "update_field": null,
-            "fixed_update": null,
-            "update_type": "d_newRecord",
-            "update_val": null,
-            "new_form": "851",
-            "new_form_entity": "",
-            "new_form_entity_level": "Needlu",
-            "operation_group": "0",
-            "display_name": "",
-            "dest_multiplier": "0",
-            "thisForm": "0",
-            "sorting_fields": "",
-            "map_until_field": null,
-            "exe_condition": null,
-            "skip_cal": null,
-            "mapping": [
-                ["Invoice.Invoice ID", "Invoice history.Reference No", "=", ""],
-                ["Invoice.Customer Name", "Invoice history.Customer Name", "=", ""]
-            ],
-            "operationGroups": [
-                {
-                    "name": "Invoice Update",
-                    "list": "1253",
-                    "group_type": "0",
-                    "mc_field": "0",
-                    "menue_condition": "",
-                    "mc_value": "",
-                    "exclude_menu": "1",
-                    "on_submit": "1",
-                    "auth_category": "",
-                    "menu_sort": "0"
-                }
-            ]
-        }
-    ]
-}"""
-
-
-# --- 4. CORE GENERATION / EDITING FUNCTION (FINALIZED with FormName.FieldName References) ---
-def generate_or_edit_json(prompt):
-    """Handles both initial JSON generation and subsequent iterative editing using the Gemini API."""
-
-    is_initial = st.session_state['is_initial']
-
-    # --- INSTRUCTION DETAILS FOR OPERATIONS ---
-    OPERATION_RULES = """
-**NEW KEY: "operations"**: This is a top-level array.
-**CRITICAL INSTRUCTION FOR operationGroups**: Each object in 'operationGroups' MUST contain 'exclude_menu' with values "0", "1", "2", "3", or "4".
+    {
+      "data_name": "Vendor Lookup",
+      "data_type": "options_search",
+      "sorting_value": 20,
+      "help_text": "",
+      "formName": "Vendor Details",
+      "search_syntax": "Vendor Details$Vendor Details.Vendor Name$Vendor Details.Email$Vendor Details.Address=Invoice.Shipping Address$Vendor Details.Status=Active"
+    },
+    {
+      "data_name": "Invoice Date",
+      "data_type": "date",
+      "sorting_value": 30,
+      "help_text": ""
+    },
+    {
+      "data_name": "Shipping Address",
+      "data_type": "text",
+      "sorting_value": 40,
+      "help_text": ""
+    }
+  ],
+  "operations": []
+}
 """
 
-    # --- FINALIZED INSTRUCTION FOR OPTIONS SEARCH (Using FormName.FieldName References) ---
-    OPTIONS_SEARCH_RULES = """
-**SPECIAL INSTRUCTION FOR DATA TYPES**:
-- If the user asks for "option search", "search field", or "advanced search", you **MUST** use the exact data_type: "options_search" (with an underscore). 
-- **NEVER** output "option search" (with a space).
-
-**SPECIAL INSTRUCTION FOR options_search (FINAL – SINGLE FORMAT)**:
-
-- When a field has `"data_type": "options_search"`:
-  - You MUST include the key `"formName"` to specify the source form.
-  - You MUST include the key `"search_syntax"`.
-
-- The `"search_syntax"` value MUST ALWAYS follow this EXACT format:
-
-"SOURCE_FORM_NAME$
- SOURCE_FORM_NAME.DISPLAY_FIELD1,SOURCE_FORM_NAME.DISPLAY_FIELD2$
- SOURCE_FORM_NAME.HIDDEN_FIELD$
- SOURCE_FORM_NAME.LOOKUP_FIELD=CURRENT_FORM_NAME.TARGET_FIELD$
- SOURCE_FORM_NAME.Status=Active"
-
-(Everything must be on ONE line as a single string in JSON.)
-
-------------------------------------------------------------
-
-**Meaning of each segment (DO NOT CHANGE ORDER):**
-
-1️⃣ SOURCE_FORM_NAME  
-   → The lookup/source form name.
-
-2️⃣ SOURCE_FORM_NAME.DISPLAY_FIELD1,SOURCE_FORM_NAME.DISPLAY_FIELD2  
-   → Fields shown in the option list (comma-separated, fully qualified).
-
-3️⃣ SOURCE_FORM_NAME.HIDDEN_FIELD  
-   → Hidden field(s) used internally for mapping.
-
-4️⃣ SOURCE_FORM_NAME.LOOKUP_FIELD=CURRENT_FORM_NAME.TARGET_FIELD  
-   → Value mapping from source form to current form.
-
-5️⃣ SOURCE_FORM_NAME.Status=Active  
-   → Filter condition (always last).
-
-------------------------------------------------------------
-
-**ABSOLUTE RULES (NO EXCEPTIONS):**
-- ❌ NEVER use numeric IDs.
-- ❌ NEVER omit any segment.
-- ❌ NEVER change the order.
-- ❌ NEVER use unqualified field names.
-- ✅ ALWAYS use `FormName.FieldName`.
+# --------------------------------------------------
+# 4. HARD RULES (SYSTEM PROMPT)
+# --------------------------------------------------
+OPERATION_RULES = """
+**operations** is a top-level array.
+Each operationGroup MUST contain 'exclude_menu' with values "0"-"4".
 """
 
-    # --- Schema Example Update (Ensure the example reflects the new syntax) ---
-    # NOTE: Since the full code isn't being displayed here, the JSON_STRUCTURE_EXAMPLE 
-    # must be updated in the main script to reflect the new syntax for consistency. 
-    # The AI will be instructed below.
+OPTIONS_RULES = """
+**ABSOLUTE DATA TYPE SELECTION RULES**:
+
+1) Use "options" ONLY IF:
+- Data comes from another form
+- EXACTLY ONE source field is selected
+- NO hidden fields
+- NO field mapping
+- NO filters
+
+2) Use "options_search" IF ANY are true:
+- TWO OR MORE fields involved
+- ANY hidden field
+- ANY mapping (Source=Target)
+- ANY filter condition
+- Field name contains "Lookup", "Search", or "Finder"
+
+3) If rule (2) applies:
+- "options_search" is MANDATORY
+- "options" is FORBIDDEN
+
+**options_search FORMAT (SINGLE FORMAT ONLY)**:
+"SOURCE_FORM_NAME$SOURCE_FORM_NAME.DISPLAY_FIELD$SOURCE_FORM_NAME.HIDDEN_FIELD$SOURCE_FORM_NAME.LOOKUP_FIELD=CURRENT_FORM_NAME.TARGET_FIELD$SOURCE_FORM_NAME.Status=Active"
+
+- Use FULLY QUALIFIED FormName.FieldName
+- NEVER omit segments
+- NEVER change order
+- NEVER use numeric IDs
+"""
+
+# --------------------------------------------------
+# 5. POST-GENERATION AUTO-FIX (SAFETY NET)
+# --------------------------------------------------
+def auto_fix_options(json_obj: dict) -> dict:
+    """
+    Enforce options vs options_search deterministically after generation.
+    """
+    for f in json_obj.get("fieldsData", []):
+        name = f.get("data_name", "").lower()
+        has_mapping = "search_syntax" in f
+        has_hidden = "search_syntax" in f
+        has_filter = "search_syntax" in f
+        is_lookup_name = any(k in name for k in ["lookup", "search", "finder"])
+
+        if f.get("data_type") == "options" and (has_mapping or has_hidden or has_filter or is_lookup_name):
+            f["data_type"] = "options_search"
+
+        if f.get("data_type") == "options_search":
+            f.setdefault("help_text", "")
+            if "search_syntax" not in f:
+                f["search_syntax"] = (
+                    "SOURCE_FORM_NAME$SOURCE_FORM_NAME.DISPLAY_FIELD$"
+                    "SOURCE_FORM_NAME.HIDDEN_FIELD$"
+                    "SOURCE_FORM_NAME.LOOKUP_FIELD=CURRENT_FORM_NAME.TARGET_FIELD$"
+                    "SOURCE_FORM_NAME.Status=Active"
+                )
+    return json_obj
+
+# --------------------------------------------------
+# 6. CORE GENERATION FUNCTION
+# --------------------------------------------------
+def generate_or_edit_json(prompt: str) -> str:
+    is_initial = st.session_state.is_initial
 
     if is_initial:
-        # System instructions are set to enforce the new rules
-        system_instruction = f"""Generate a complete JSON object.
+        system_instruction = f"""
+Generate a COMPLETE JSON object.
 
-**MANDATORY**: Response must be ONLY valid JSON.
-**CRITICAL**: "fieldsData" and "operations" must match the provided schema structure.
-**MANDATORY DATA TYPES**: The 'data_type' key MUST ONLY use: **sequence, options, options_search, date, text, number, calculation**.
-**MANDATORY**: 'sorting_value' must be in intervals of 10
-**OPTIONS RULE**: For **'options'** and **'options_search'** types, include "formName".
-
-**IMPORTANT INSTRUCTION FOR CALCULATION**: Calculations must use one of the following two formats: Simple internal reference or Complex cross-form reference.
-The entire formula must be written as a **single JSON string**.
+MANDATORY:
+- Output ONLY valid JSON
+- sorting_value must be numeric and in steps of 10
+- help_text must exist and be ""
+- Allowed data_type values ONLY:
+  sequence, options, options_search, date, text, number, calculation
 
 {OPERATION_RULES}
-{OPTIONS_SEARCH_RULES}
+{OPTIONS_RULES}
 
-JSON Structure Example (Ensure this example in your main code shows fully qualified refs):
+JSON STRUCTURE EXAMPLE:
 {JSON_STRUCTURE_EXAMPLE}
 """
         user_content = f"Requirement: {prompt}"
-
     else:
-        current_json = st.session_state['generated_json']
-        system_instruction = f"""You are a JSON form editing assistant. Modify the CURRENT JSON based on the request.
+        system_instruction = f"""
+Modify the CURRENT JSON only as requested.
+Preserve everything else.
 
-**CURRENT JSON**: {current_json}
-
-**MANDATORY**: Response must be ONLY valid JSON.
-**CRITICAL**: Preserve existing fields unless asked to change.
-**SCHEMA REMINDER**: Adhere to the structure in the JSON Structure Example. Use a sorting_value that is appropriate relative to existing fields.
+CURRENT JSON:
+{st.session_state.generated_json}
 
 {OPERATION_RULES}
-{OPTIONS_SEARCH_RULES}
+{OPTIONS_RULES}
 
-JSON Structure Example:
+JSON STRUCTURE EXAMPLE:
 {JSON_STRUCTURE_EXAMPLE}
 """
-        user_content = f"Please apply this change to the current JSON: {prompt}"
+        user_content = f"Change request: {prompt}"
 
-    # Configure request
     config = types.GenerateContentConfig(response_mime_type="application/json")
 
     try:
-        full_prompt = f"System Instruction:\n{system_instruction}\n\nUser Request:\n{user_content}"
-        
         completion = client.models.generate_content(
             model=GEMINI_MODEL,
-            contents=full_prompt,
-            config=config
+            contents=f"System Instruction:\n{system_instruction}\n\nUser Request:\n{user_content}",
+            config=config,
         )
 
-        generated_text = completion.text
+        parsed = json.loads(completion.text)
+        parsed = auto_fix_options(parsed)
 
-        try:
-            parsed_json = json.loads(generated_text)
-            formatted_json = json.dumps(parsed_json, indent=4)
-            st.session_state['generated_json'] = formatted_json
-            st.session_state['is_initial'] = False
-            
-            if is_initial:
-                return "JSON generated. The `search_syntax` is now **mandatory** for `options_search` fields and should include the placeholder."
-            else:
-                return "JSON updated successfully."
+        st.session_state.generated_json = json.dumps(parsed, indent=4)
+        st.session_state.is_initial = False
+        return "JSON generated/updated successfully with enforced options vs options_search rules."
 
-        except json.JSONDecodeError:
-            return f"❌ Error: Model did not return valid JSON. Raw Output: {generated_text[:200]}..."
-
+    except json.JSONDecodeError:
+        return "❌ Model did not return valid JSON."
     except Exception as e:
-        return f"❌ API Error: {e}"
+        return f"❌ Error: {e}"
 
-# --- 5. STREAMLIT UI LAYOUT ---
-st.set_page_config(page_title="JSON Editor Chat", page_icon="https://www.needlu.com/webImage/needluLogoV.png", layout="wide")
-st.title("Needlu Form Generator")
-st.markdown("Enter your requirement below.")
+# --------------------------------------------------
+# 7. STREAMLIT UI
+# --------------------------------------------------
+st.set_page_config(page_title="Needlu Form Generator", layout="wide")
+st.title("Needlu Form Generator – Stable Options Logic")
 
-# Create two columns for the split view
-col1, col2 = st.columns([1, 1])
+col1, col2 = st.columns(2)
 
 with col1:
-    st.subheader("Chat Interface")
+    st.subheader("Chat")
+    for m in st.session_state.messages:
+        with st.chat_message(m["role"]):
+            st.markdown(m["content"])
 
-    # Display the chat history
-    for message in st.session_state['messages']:
-        with st.chat_message(message["role"]):
-            st.markdown(message["content"])
-
-    # Handle new user input
-    if prompt := st.chat_input("Enter your initial form requirement or a modification"):
-        # Add user message to state
-        st.session_state['messages'].append({"role": "user", "content": prompt})
-
-        # Get response from the model
-        if client:
-            with st.spinner(f"Processing..."):
-                assistant_response_text = generate_or_edit_json(prompt)
-        else:
-            assistant_response_text = "❌ Google GenAI client is not initialized. Check API key configuration."
-
-        # Add assistant response (narrative) to state
-        st.session_state['messages'].append({"role": "assistant", "content": assistant_response_text})
-
-        # Display assistant message
-        with st.chat_message("assistant"):
-            st.markdown(assistant_response_text)
-
-        # Rerun to update the JSON display in col2
+    if user_prompt := st.chat_input("Enter your requirement"):
+        st.session_state.messages.append({"role": "user", "content": user_prompt})
+        with st.spinner("Processing..."):
+            reply = generate_or_edit_json(user_prompt)
+        st.session_state.messages.append({"role": "assistant", "content": reply})
         st.rerun()
 
-
 with col2:
-    st.subheader("Current Generated JSON")
-
-    # Display the latest generated JSON artifact
-    st.code(st.session_state['generated_json'], language="json")
-
-    # Download button for the current artifact
+    st.subheader("Generated JSON")
+    st.code(st.session_state.generated_json, language="json")
     st.download_button(
-        label="Download Current JSON",
-        data=st.session_state['generated_json'],
-        file_name="generated_form_latest.json",
-        mime="application/json"
+        "Download JSON",
+        st.session_state.generated_json,
+        file_name="generated_form.json",
+        mime="application/json",
     )
-
-    if st.session_state['is_initial']:
-        st.info("Start by entering your form requirement (e.g., 'Create a Purchase Order form with fields for Vendor, Item, Quantity, and Price').")
-    else:
-        st.success("Refine the JSON using the chat interface on the left.")
-
-
