@@ -31,9 +31,8 @@ if 'is_initial' not in st.session_state:
     st.session_state['is_initial'] = True
 
 
-# --- 3. JSON SCHEMA DEFINITION (Corrected and Finalized) ---
-# FIX: Corrected syntax errors (missing commas, incorrect $ placement) and enforced the
-# FormName.FieldName syntax in the example.
+# --- 3. JSON SCHEMA DEFINITION (Used for prompting) ---
+# Updated to show a name-based syntax example for "options_search"
 JSON_STRUCTURE_EXAMPLE = """{
     "formData": {
         "entityType": "T Department",
@@ -55,50 +54,47 @@ JSON_STRUCTURE_EXAMPLE = """{
             "sufix": "",
             "digits": "1",
             "replacer": "0",
-            "start_with": "1",
-            "help_text": ""
+            "start_with": "1"
         },
-        {
+         {
             "data_name": "Customer Name",
             "data_type": "options_search",
-            "sorting_value": 20,
-            "formName": "Customer Details",
-            "search_syntax": "Customer Details.Customer Name,Customer Details.Customer ID$Customer Details.Tax ID$Customer Details.Billing Address=Invoice.Shipping Address$Customer Details.Status=Active",
-            "help_text": ""
+            "sorting_value": "80",
+            "formName": "Vendor Details"
+            "search_syntax": "Vendor Details$Vendor Details.Vendor Name,Vendor Details.Vendor Product$Vendor Details.Vendor Product Category$Vendor Details.Vendor Product=Invoice.Product Name,Vendor Details.Vendor Product Category=Invoice.Product Category$Vendor Details.Status=Active"
         },
         {
             "data_name": "Invoice Date",
             "data_type": "date",
-            "sorting_value": 30,
-            "help_text": ""
+            "sorting_value": "30"
         },
         {
             "data_name": "Product Name",
             "data_type": "text",
-            "sorting_value": 40,
-            "help_text": ""
+            "sorting_value": "40"
         },
+
         {
             "data_name": "Product Category",
             "data_type": "text",
-            "sorting_value": 50,
-            "help_text": ""
+            "sorting_value": "50"
         },
+
+        
         {
-            "data_name": "Unit Price",
+             "data_name": "Unit Price",
             "data_type": "number",
-            "sorting_value": 60,
-            "decimals": "2",
-            "help_text": ""
+            "sorting_value": "60",
+            "decimals": "2"
         },
         {
             "data_name": "Line Total",
             "data_type": "calculation",
-            "sorting_value": 70,
+            "sorting_value": "70",
             "calculation": "{GoodsReceived^Quantity^GoodsReceived.GRNLineID,Invoice.Product ID,=} * {Invoice.Unit Price}",
-            "decimals": "2",
-            "help_text": ""
+            "decimals": "2"
         }
+       
     ],
     "operations": [
         {
@@ -143,7 +139,7 @@ JSON_STRUCTURE_EXAMPLE = """{
 }"""
 
 
-# --- 4. CORE GENERATION / EDITING FUNCTION (FINALIZED with FormName.FieldName References and strict structure) ---
+# --- 4. CORE GENERATION / EDITING FUNCTION (FINALIZED with FormName.FieldName References) ---
 def generate_or_edit_json(prompt):
     """Handles both initial JSON generation and subsequent iterative editing using the Gemini API."""
 
@@ -153,10 +149,9 @@ def generate_or_edit_json(prompt):
     OPERATION_RULES = """
 **NEW KEY: "operations"**: This is a top-level array.
 **CRITICAL INSTRUCTION FOR operationGroups**: Each object in 'operationGroups' MUST contain 'exclude_menu' with values "0", "1", "2", "3", or "4".
-**CRITICAL STRUCTURE FIX**: Ensure all operations blocks are placed ONLY inside the top-level "operations" array, NOT inside "fieldsData".
 """
 
-    # --- FINALIZED INSTRUCTION FOR OPTIONS SEARCH (Mandatory Search Syntax) ---
+    # --- FINALIZED INSTRUCTION FOR OPTIONS SEARCH (Using FormName.FieldName References) ---
     OPTIONS_SEARCH_RULES = """
 **SPECIAL INSTRUCTION FOR DATA TYPES**:
 - If the user asks for "option search", "search field", or "advanced search", you **MUST** use the exact data_type: "options_search" (with an underscore). 
@@ -164,18 +159,24 @@ def generate_or_edit_json(prompt):
 
 **CRITICAL RULE FOR options_search SYNTAX**:
 - For **"options_search"** type, you **MUST** include the **"formName"** key to specify the source form.
-- The **"search_syntax"** key is **MANDATORY**. It MUST use the **FULLY QUALIFIED** reference: **"FormName.FieldName"** for every field entry.
+- The **"search_syntax"** key MUST use the **FULLY QUALIFIED** reference: **"FormName.FieldName"** for every field entry.
 
 **search_syntax format**:
 "Display Field Refs (comma-separated)$Hidden Field Refs (comma-separated)$Mapping (SourceRef=CurrentRef)$Filter Condition (SourceRef=Value)"
 
-**Example of Target Syntax**:
-"Vendor Details.Vendor Name,Vendor Details.Vendor ID$Vendor Details.Tax ID$Vendor Details.Product=Invoice.Product Name$Vendor Details.Status=Active"
+**Example of Target Syntax (Using fully qualified references)**:
+"Vendor Details$Vendor Details.Vendor Name,Vendor Details.Vendor Product$Vendor Details.Vendor Product Category$Vendor Details.Vendor Product=Invoice.Product Name,Vendor Details.Vendor Product Category=Invoice.Product Category$Vendor Details.Status=Active"
 
-**MANDATORY PLACEHOLDER RULE**:
-- If the user DID NOT provide specific details for the search, you **MUST** still include the "search_syntax" key using this **FULLY QUALIFIED** placeholder string exactly:
-  "SOURCE_FORM_NAME.DISPLAY_FIELD1,SOURCE_FORM_NAME.DISPLAY_FIELD2$SOURCE_FORM_NAME.HIDDEN_FIELD$SOURCE_FORM_NAME.LOOKUP_FIELD=CURRENT_FORM_NAME.TARGET_FIELD$SOURCE_FORM_NAME.Status=Active"
+**Value Logic**:
+    - If the user provided specific details, use them to construct the fully qualified, name-based format.
+    - If the user DID NOT provide specific details, use this **FULLY QUALIFIED** placeholder string exactly:
+      "SOURCE_FORM_NAME.DISPLAY_FIELD1,SOURCE_FORM_NAME.DISPLAY_FIELD2$SOURCE_FORM_NAME.HIDDEN_FIELD$SOURCE_FORM_NAME.LOOKUP_FIELD=CURRENT_FORM_NAME.TARGET_FIELD$SOURCE_FORM_NAME.Status=Active"
 """
+
+    # --- Schema Example Update (Ensure the example reflects the new syntax) ---
+    # NOTE: Since the full code isn't being displayed here, the JSON_STRUCTURE_EXAMPLE 
+    # must be updated in the main script to reflect the new syntax for consistency. 
+    # The AI will be instructed below.
 
     if is_initial:
         # System instructions are set to enforce the new rules
@@ -194,7 +195,7 @@ The entire formula must be written as a **single JSON string**.
 {OPERATION_RULES}
 {OPTIONS_SEARCH_RULES}
 
-JSON Structure Example:
+JSON Structure Example (Ensure this example in your main code shows fully qualified refs):
 {JSON_STRUCTURE_EXAMPLE}
 """
         user_content = f"Requirement: {prompt}"
@@ -238,7 +239,7 @@ JSON Structure Example:
             st.session_state['is_initial'] = False
             
             if is_initial:
-                return "JSON generated. The code has been fixed, and the `search_syntax` is now **mandatory** for `options_search` fields."
+                return "JSON generated. The `search_syntax` is now **mandatory** for `options_search` fields and should include the placeholder."
             else:
                 return "JSON updated successfully."
 
@@ -247,7 +248,6 @@ JSON Structure Example:
 
     except Exception as e:
         return f"❌ API Error: {e}"
-
 
 # --- 5. STREAMLIT UI LAYOUT ---
 st.set_page_config(page_title="JSON Editor Chat", page_icon="https://www.needlu.com/webImage/needluLogoV.png", layout="wide")
@@ -306,3 +306,4 @@ with col2:
         st.info("Start by entering your form requirement (e.g., 'Create a Purchase Order form with fields for Vendor, Item, Quantity, and Price').")
     else:
         st.success("Refine the JSON using the chat interface on the left.")
+
