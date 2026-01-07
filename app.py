@@ -59,7 +59,6 @@ JSON_STRUCTURE_EXAMPLE = """
       "data_name": "Invoice ID",
       "data_type": "sequence",
       "sorting_value": 10,
-      "help_text": "",
       "keyMember": 0,
       "prefix": "POL",
       "sufix": "",
@@ -71,24 +70,20 @@ JSON_STRUCTURE_EXAMPLE = """
       "data_name": "Vendor Lookup",
       "data_type": "options_search",
       "sorting_value": 20,
-      "help_text": "",
       "formName": "Vendor Details",
       "search_syntax": "Vendor Details$Vendor Details.Vendor Name$Vendor Details.Email$Vendor Details.Address=Invoice.Shipping Address$Vendor Details.Status=Active"
     },
     {
       "data_name": "Invoice Date",
       "data_type": "date",
-      "sorting_value": 30,
-      "help_text": ""
+      "sorting_value": 30
     },
     {
       "data_name": "Shipping Address",
       "data_type": "text",
-      "sorting_value": 40,
-      "help_text": ""
+      "sorting_value": 40
     }
-  ],
-  "operations": []
+  ]
 }
 """
 
@@ -249,3 +244,4 @@ with col2:
         file_name="generated_form.json",
         mime="application/json",
     )
+
