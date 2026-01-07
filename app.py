@@ -33,7 +33,7 @@ if "messages" not in st.session_state:
     st.session_state.messages = []
 if "generated_json" not in st.session_state:
     st.session_state.generated_json = json.dumps(
-        {"formData": {"newformName": "Draft Form"}, "fieldsData": [], "operations": []},
+        {"formData": {"newformName": "Draft Form"}, "fieldsData": []},
         indent=4,
     )
 if "is_initial" not in st.session_state:
@@ -244,4 +244,5 @@ with col2:
         file_name="generated_form.json",
         mime="application/json",
     )
+
 
