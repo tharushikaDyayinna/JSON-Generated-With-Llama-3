@@ -90,6 +90,9 @@ JSON_STRUCTURE_EXAMPLE = """
 # --------------------------------------------------
 # 4. HARD RULES (SYSTEM PROMPT)
 # --------------------------------------------------
+
+
+
 OPTIONS_RULES = """
 **ABSOLUTE DATA TYPE SELECTION RULES**:
 
@@ -165,7 +168,6 @@ MANDATORY:
 - Allowed data_type values ONLY:
   sequence, options, options_search, date, text, number, calculation
 
-{OPERATION_RULES}
 {OPTIONS_RULES}
 
 JSON STRUCTURE EXAMPLE:
@@ -180,7 +182,6 @@ Preserve everything else.
 CURRENT JSON:
 {st.session_state.generated_json}
 
-{OPERATION_RULES}
 {OPTIONS_RULES}
 
 JSON STRUCTURE EXAMPLE:
