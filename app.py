@@ -141,7 +141,6 @@ def auto_fix_options(json_obj: dict) -> dict:
             f["data_type"] = "options_search"
 
         if f.get("data_type") == "options_search":
-            f.setdefault("help_text", "")
             if "search_syntax" not in f:
                 f["search_syntax"] = (
                     "SOURCE_FORM_NAME$SOURCE_FORM_NAME.DISPLAY_FIELD$"
@@ -164,7 +163,6 @@ Generate a COMPLETE JSON object.
 MANDATORY:
 - Output ONLY valid JSON
 - sorting_value must be numeric and in steps of 10
-- help_text must exist and be ""
 - Allowed data_type values ONLY:
   sequence, options, options_search, date, text, number, calculation
 
@@ -240,6 +238,7 @@ with col2:
         file_name="generated_form.json",
         mime="application/json",
     )
+
 
 
 
