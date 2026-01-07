@@ -90,11 +90,6 @@ JSON_STRUCTURE_EXAMPLE = """
 # --------------------------------------------------
 # 4. HARD RULES (SYSTEM PROMPT)
 # --------------------------------------------------
-OPERATION_RULES = """
-**operations** is a top-level array.
-Each operationGroup MUST contain 'exclude_menu' with values "0"-"4".
-"""
-
 OPTIONS_RULES = """
 **ABSOLUTE DATA TYPE SELECTION RULES**:
 
@@ -244,5 +239,6 @@ with col2:
         file_name="generated_form.json",
         mime="application/json",
     )
+
 
 
