@@ -1,6 +1,7 @@
 # =============================
 # NEEDLU FORM GENERATOR (FINAL)
 # Enforced distinction between options vs options_search
+# Added support for group_open and group_close
 # =============================
 
 import streamlit as st
@@ -82,6 +83,44 @@ JSON_STRUCTURE_EXAMPLE = """
       "data_name": "Shipping Address",
       "data_type": "text",
       "sorting_value": 40
+    },
+    {
+      "data_name": "Male",
+      "data_type": "group_open",
+      "sorting_value": 50
+    },
+    {
+      "data_name": "M 17 - 50 Yrs",
+      "data_type": "text",
+      "sorting_value": 60,
+      "defaultVal": "10 mm in 1st hour"
+    },
+    {
+      "data_name": "M 51 - 60 Yrs",
+      "data_type": "text",
+      "sorting_value": 70,
+      "defaultVal": "12 mm in 1st hour"
+    },
+    {
+      "data_name": "GC Male",
+      "data_type": "group_close",
+      "sorting_value": 80
+    },
+    {
+      "data_name": "Female",
+      "data_type": "group_open",
+      "sorting_value": 90
+    },
+    {
+      "data_name": "F 17 - 50 Yrs",
+      "data_type": "text",
+      "sorting_value": 100,
+      "defaultVal": "12 mm in 1st hour"
+    },
+    {
+      "data_name": "GC Female",
+      "data_type": "group_close",
+      "sorting_value": 110
     }
   ]
 }
@@ -90,8 +129,6 @@ JSON_STRUCTURE_EXAMPLE = """
 # --------------------------------------------------
 # 4. HARD RULES (SYSTEM PROMPT)
 # --------------------------------------------------
-
-
 
 OPTIONS_RULES = """
 **ABSOLUTE DATA TYPE SELECTION RULES**:
@@ -123,6 +160,49 @@ OPTIONS_RULES = """
 - NEVER use numeric IDs
 """
 
+GROUP_RULES = """
+**GROUP FIELD RULES**:
+
+1) **group_open** - Start of a field group/section
+   Required keys: data_name, data_type, sorting_value
+   Use this to create collapsible sections or visual groupings of fields
+   Must be paired with a corresponding group_close
+   
+   Example:
+   {
+     "data_name": "Male",
+     "data_type": "group_open",
+     "sorting_value": 110
+   }
+
+2) **group_close** - End of a field group/section
+   Required keys: data_name, data_type, sorting_value
+   Marks the end of a group started by group_open
+   The data_name typically indicates which group is closing (e.g., "Male End" or "GC Male")
+   Convention: Use "GC " prefix for group close names (e.g., "GC Male", "GC Female")
+   
+   Example:
+   {
+     "data_name": "GC Male",
+     "data_type": "group_close",
+     "sorting_value": 150
+   }
+
+3) **GROUP PAIRING RULES**:
+   - Every group_open MUST have a matching group_close
+   - Groups can be nested
+   - Fields between group_open and group_close belong to that group
+   - sorting_value must maintain proper order
+   - Group close data_name should reference the group being closed
+
+4) **TYPICAL GROUP PATTERN**:
+   group_open (sorting_value: N)
+     → field 1 (sorting_value: N+10)
+     → field 2 (sorting_value: N+20)
+     → field 3 (sorting_value: N+30)
+   group_close (sorting_value: N+40)
+"""
+
 # --------------------------------------------------
 # 5. POST-GENERATION AUTO-FIX (SAFETY NET)
 # --------------------------------------------------
@@ -150,6 +230,31 @@ def auto_fix_options(json_obj: dict) -> dict:
                 )
     return json_obj
 
+def validate_groups(json_obj: dict) -> tuple[bool, str]:
+    """
+    Validate that group_open and group_close are properly paired.
+    Returns (is_valid, message)
+    """
+    fields = json_obj.get("fieldsData", [])
+    group_stack = []
+    
+    for i, field in enumerate(fields):
+        data_type = field.get("data_type")
+        data_name = field.get("data_name", "")
+        
+        if data_type == "group_open":
+            group_stack.append((data_name, i))
+        elif data_type == "group_close":
+            if not group_stack:
+                return False, f"❌ Group close '{data_name}' at position {i} has no matching group_open"
+            group_stack.pop()
+    
+    if group_stack:
+        unclosed = [name for name, _ in group_stack]
+        return False, f"❌ Unclosed groups: {', '.join(unclosed)}"
+    
+    return True, "✓ All groups properly paired"
+
 # --------------------------------------------------
 # 6. CORE GENERATION FUNCTION
 # --------------------------------------------------
@@ -164,9 +269,11 @@ MANDATORY:
 - Output ONLY valid JSON
 - sorting_value must be numeric and in steps of 10
 - Allowed data_type values ONLY:
-  sequence, options, options_search, date, text, number, calculation
+  sequence, options, options_search, date, text, number, calculation, group_open, group_close
 
 {OPTIONS_RULES}
+
+{GROUP_RULES}
 
 JSON STRUCTURE EXAMPLE:
 {JSON_STRUCTURE_EXAMPLE}
@@ -181,6 +288,8 @@ CURRENT JSON:
 {st.session_state.generated_json}
 
 {OPTIONS_RULES}
+
+{GROUP_RULES}
 
 JSON STRUCTURE EXAMPLE:
 {JSON_STRUCTURE_EXAMPLE}
@@ -199,9 +308,14 @@ JSON STRUCTURE EXAMPLE:
         parsed = json.loads(completion.text)
         parsed = auto_fix_options(parsed)
 
+        # Validate groups
+        is_valid, validation_msg = validate_groups(parsed)
+        
         st.session_state.generated_json = json.dumps(parsed, indent=4)
         st.session_state.is_initial = False
-        return "JSON generated/updated successfully with enforced options vs options_search rules."
+        
+        base_msg = "JSON generated/updated successfully with enforced options vs options_search rules."
+        return f"{base_msg}\n{validation_msg}"
 
     except json.JSONDecodeError:
         return "❌ Model did not return valid JSON."
@@ -212,7 +326,7 @@ JSON STRUCTURE EXAMPLE:
 # 7. STREAMLIT UI
 # --------------------------------------------------
 st.set_page_config(page_title="Needlu Form Generator", layout="wide")
-st.title("Needlu Form Generator – Stable Options Logic")
+st.title("Needlu Form Generator — Stable Options Logic + Groups")
 
 col1, col2 = st.columns(2)
 
@@ -238,7 +352,3 @@ with col2:
         file_name="generated_form.json",
         mime="application/json",
     )
-
-
-
-
